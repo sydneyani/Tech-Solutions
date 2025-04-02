@@ -1,0 +1,46 @@
+.admin-panel {
+    padding: 2rem;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  .admin-form input,
+  .admin-form select {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  
+  .admin-form button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .admin-section {
+    margin-bottom: 2rem;
+  }
+  
+  .train-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  
+  .train-list li {
+    margin-bottom: 0.75rem;
+  }
+  
+  .train-list button {
+    margin-left: 1rem;
+    background-color: #dc3545;
+  }
+  
