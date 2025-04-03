@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard';
 import AdminPanel from './components/AdminPanel';
 import BookTrain from './components/BookTrain';
 import ViewSchedule from './components/ViewSchedule';
+import ManageRides from './components/ManageRides';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 
@@ -26,6 +27,8 @@ function App() {
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/book-train" element={<BookTrain />} />
           <Route path="/view-schedule" element={<ViewSchedule />} />
+          <Route path="/manage-rides" element={<ManageRides />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

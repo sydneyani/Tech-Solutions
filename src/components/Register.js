@@ -14,7 +14,7 @@ const Register = () => {
     gender: '',
     dob: '',
     mobile: '',
-    role: 'Passenger',
+
   });
 
   const { setUser } = useAuth();
@@ -75,11 +75,7 @@ const Register = () => {
 
         <input name="mobile" placeholder="Mobile Number" onChange={handleChange} />
 
-        <select name="role" onChange={handleChange}>
-          <option value="Passenger">Passenger</option>
-          <option value="Staff">Staff</option>
-          <option value="Admin">Admin</option>
-        </select>
+        
 
         <button type="submit" className="register-btn">Register</button>
       </form>

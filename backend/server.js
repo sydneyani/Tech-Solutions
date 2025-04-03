@@ -4,6 +4,7 @@ const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const routeRoutes = require('./routes/routes'); // ✅ this is new
+const staffRoutes = require('./routes/staffRoutes');
 
 
 const app = express();
@@ -23,6 +24,8 @@ app.use('/api/users', userRoutes);       // e.g. /api/users/login
 app.use('/api/admin', adminRoutes);      // e.g. /api/admin/add-train
 app.use('/api/schedules', scheduleRoutes); // ✅ handles schedules + seat routes
 app.use('/api/routes', routeRoutes);
+app.use('/api/staff', staffRoutes);
+
 
 // Start server
 app.listen(5000, () => {
