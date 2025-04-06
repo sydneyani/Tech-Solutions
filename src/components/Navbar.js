@@ -24,36 +24,36 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="nav-left">
-            <button className="back-btn" onClick={goBack}>⬅ Back</button>
-            <Link className="nav-logo" to="/">🚆 RailSys</Link>
-        </div>
-        <div className="nav-links">
-            {user && (
-            <>
-                <Link to="/dashboard">Dashboard</Link>
-                {user.role === 'Passenger' && (
-                <>
-                    <Link to="/book-train">Book Train</Link>
-                    <Link to="/view-schedule">View Schedule</Link>
-                    
-                </>
-                )}
-                {user.role === 'Staff' && (
-            <Link to="/manage-rides">Manage Rides</Link>
+        <button className="back-btn" onClick={goBack}>⬅ Back</button>
+        <Link className="nav-logo" to="/">🚆 RailSys</Link>
+      </div>
+      <div className="nav-links">
+        {user && (
+          <>
+            <Link to="/dashboard">Dashboard</Link>
+            {user.role === 'Passenger' && (
+              <>
+                <Link to="/book-train">Book Train</Link>
+                <Link to="/view-schedule">View Schedule</Link>
+                <Link to="/travel-history">Travel History</Link>
+              </>
+            )}
+            {user.role === 'Staff' && (
+              <Link to="/manage-rides">Manage Rides</Link>
+            )}
+            {user.role === 'Admin' && <Link to="/admin">Admin Panel</Link>}
+            <button onClick={handleLogout} className="logout-btn">Logout</button>
+          </>
         )}
-                {user.role === 'Admin' && <Link to="/admin">Admin Panel</Link>}
-                <button onClick={handleLogout} className="logout-btn">Logout</button>
-            </>
-            )}
-            {!user && (
-            <>
-                <Link to="/login">Login</Link>
-                <Link to="/register">Register</Link>
-            </>
-            )}
-        </div>
-        </nav>
-    );
-    };
+        {!user && (
+          <>
+            <Link to="/login">Login</Link>
+            <Link to="/register">Register</Link>
+          </>
+        )}
+      </div>
+    </nav>
+  );
+};
 
-    export default Navbar;
+export default Navbar;

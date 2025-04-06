@@ -7,6 +7,7 @@ const routeRoutes = require('./routes/routes');
 const staffRoutes = require('./routes/staffRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
+const passengerRoutes = require('./routes/passengerRoutes'); // Add passenger routes
 
 const app = express();
 
@@ -26,8 +27,9 @@ app.use('/api/admin', adminRoutes);      // e.g. /api/admin/add-train
 app.use('/api/schedules', scheduleRoutes); // ✅ handles schedules + seat routes
 app.use('/api/routes', routeRoutes);
 app.use('/api/staff', staffRoutes);
-app.use('/api/payments', paymentRoutes);  // Changed to plural to match client requests
-app.use('/api/tickets', ticketRoutes);    // Changed to plural to match client requests
+app.use('/api/payment', paymentRoutes);
+app.use('/api/ticket', ticketRoutes);
+app.use('/api/passengers', passengerRoutes); // Add new passenger routes
 
 // 404 handler for routes that don't exist
 app.use((req, res, next) => {
@@ -37,6 +39,5 @@ app.use((req, res, next) => {
 // Start server
 app.listen(5000, () => {
   console.log('✅ Server running on http://localhost:5000');
-  console.log('💡 Payment endpoint: http://localhost:5000/api/payments/process');
-  console.log('💡 Ticket endpoint: http://localhost:5000/api/tickets/create');
+  console.log('✅ New route: http://localhost:5000/api/passengers/:user_id/history');
 });
