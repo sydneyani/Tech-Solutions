@@ -1,4 +1,3 @@
-// src/components/Navbar.js
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -31,17 +30,25 @@ const Navbar = () => {
         {user && (
           <>
             <Link to="/dashboard">Dashboard</Link>
-            {user.role === 'Passenger' && (
-              <>
-                <Link to="/book-train">Book Train</Link>
-                <Link to="/view-schedule">View Schedule</Link>
-                <Link to="/travel-history">Travel History</Link>
-              </>
+            <Link to="/view-schedule">View Schedule</Link>
+            
+            {/* Show Travel History for both Passenger and Staff */}
+            {(user.role === 'Passenger' || user.role === 'Staff') && (
+              <Link to="/travel-history">Travel History</Link>
             )}
+            
+            {user.role === 'Passenger' && (
+              <Link to="/book-train">Book Train</Link>
+            )}
+            
             {user.role === 'Staff' && (
               <Link to="/manage-rides">Manage Rides</Link>
             )}
-            {user.role === 'Admin' && <Link to="/admin">Admin Panel</Link>}
+            
+            {user.role === 'Admin' && (
+              <Link to="/admin">Admin Panel</Link>
+            )}
+            
             <button onClick={handleLogout} className="logout-btn">Logout</button>
           </>
         )}

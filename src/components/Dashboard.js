@@ -1,4 +1,3 @@
-// ✅ Dashboard.js
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -16,11 +15,15 @@ const Dashboard = () => {
         <p className="user-role">Role: <strong>{user.role}</strong></p>
         
         <div className="dashboard-buttons">
-          <Link to="/book-train" className="dash-btn">🚆 Book a Train</Link>
           <Link to="/view-schedule" className="dash-btn">📅 View Schedule</Link>
           
-          {user.role === 'Passenger' && (
+          {/* Show Travel History button for both Passenger and Staff */}
+          {(user.role === 'Passenger' || user.role === 'Staff') && (
             <Link to="/travel-history" className="dash-btn">📜 Travel History</Link>
+          )}
+          
+          {user.role === 'Passenger' && (
+            <Link to="/book-train" className="dash-btn">🚆 Book a Train</Link>
           )}
           
           {user.role === 'Admin' && (

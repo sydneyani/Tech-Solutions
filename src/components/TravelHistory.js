@@ -18,8 +18,21 @@ const TravelHistory = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch booking history for the logged-in user
-        const response = await axios.get(`http://localhost:5000/api/passengers/${user.user_id}/history`);
+        // Determine which endpoint to use based on user role
+        let endpoint;
+        if (user.role === 'Passenger') {
+          endpoint = `http://localhost:5000/api/passengers/${user.user_id}/history`;
+        } else if (user.role === 'Staff') {
+          endpoint = `http://localhost:5000/api/staff/${user.user_id}/history`;
+        } else {
+          // If role is neither Passenger nor Staff, show error
+          setError('Access denied. Only passengers and staff can view travel history.');
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch booking history
+        const response = await axios.get(endpoint);
         
         console.log('Travel history data:', response.data);
         setTravelHistory(response.data);
@@ -63,27 +76,28 @@ const TravelHistory = () => {
       
       // Add user info
       doc.setFontSize(12);
-      doc.text(`Passenger: ${user.first_name || ''} ${user.last_name || ''}`, 14, 30);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 36);
+      doc.text(`Name: ${user.first_name || ''} ${user.last_name || ''}`, 14, 30);
+      doc.text(`Role: ${user.role}`, 14, 36);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 42);
       
       // Add header lines
       doc.setFontSize(10);
       doc.setTextColor(0, 87, 146); // Blue color for header
-      doc.text('Date', 14, 50);
-      doc.text('Train', 50, 50);
-      doc.text('Route', 100, 50);
-      doc.text('Seat', 150, 50);
-      doc.text('Status', 170, 50);
+      doc.text('Date', 14, 56);
+      doc.text('Train', 50, 56);
+      doc.text('Route', 100, 56);
+      doc.text('Seat', 150, 56);
+      doc.text('Status', 170, 56);
       
       // Add line under headers
       doc.setDrawColor(0, 87, 146);
-      doc.line(14, 52, 196, 52);
+      doc.line(14, 58, 196, 58);
       
       // Reset text color to black for content
       doc.setTextColor(0, 0, 0);
       
       // Add content line by line
-      let yPos = 60;
+      let yPos = 66;
       
       travelHistory.forEach((booking, index) => {
         // If we're near the bottom of the page, add a new page
@@ -144,9 +158,20 @@ const TravelHistory = () => {
     );
   }
 
+  // Only allow Passenger and Staff to view travel history
+  if (user.role !== 'Passenger' && user.role !== 'Staff') {
+    return (
+      <div className="travel-history-container">
+        <div className="auth-message">Access denied. Only passengers and staff can view travel history.</div>
+      </div>
+    );
+  }
+
+  const title = user.role === 'Staff' ? '🚆 My Staff Travel History' : '🚆 My Travel History';
+
   return (
     <div className="travel-history-container">
-      <h2>🚆 My Travel History</h2>
+      <h2>{title}</h2>
       
       {loading ? (
         <div className="loading">Loading travel history...</div>
@@ -154,8 +179,10 @@ const TravelHistory = () => {
         <div className="error-message">{error}</div>
       ) : travelHistory.length === 0 ? (
         <div className="empty-history">
-          <p>You haven't made any train bookings yet.</p>
-          <p>Book a train to see your travel history here!</p>
+          <p>You haven't made any train journeys yet.</p>
+          {user.role === 'Passenger' && (
+            <p>Book a train to see your travel history here!</p>
+          )}
         </div>
       ) : (
         <>
