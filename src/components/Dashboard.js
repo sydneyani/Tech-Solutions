@@ -19,7 +19,8 @@ const Dashboard = () => {
           <Link to="/book-train" className="dash-btn">🚆 Book a Train</Link>
           <Link to="/view-schedule" className="dash-btn">📅 View Schedule</Link>
           
-          {user.role === 'Passenger' && (
+          {/* Show Travel History to both Passengers and Staff */}
+          {(user.role === 'Passenger' || user.role === 'Staff') && (
             <Link to="/travel-history" className="dash-btn">📜 Travel History</Link>
           )}
           
