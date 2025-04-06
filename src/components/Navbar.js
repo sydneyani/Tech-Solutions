@@ -31,7 +31,7 @@ const Navbar = () => {
         {user && (
           <>
             <Link to="/dashboard">Dashboard</Link>
-            {(user.role === 'Passenger' || user.role === 'Staff') && (
+            {user.role === 'Passenger' && (
               <>
                 <Link to="/book-train">Book Train</Link>
                 <Link to="/view-schedule">View Schedule</Link>
