@@ -2,8 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Register User + add to passenger table if role = 'Passenger'
-// Register User + add to passenger table if role = 'Passenger'
+// Register User + add to passenger table (default role is 'Passenger')
 router.post('/register', (req, res) => {
     const {
       first_name,
@@ -14,10 +13,12 @@ router.post('/register', (req, res) => {
       gender,
       dob,
       mobile,
-      role
+      // Get role from request or default to 'Passenger'
+      role = 'Passenger'
     } = req.body;
   
     console.log('Received registration:', req.body);
+    console.log('Using role:', role); // Log the role being used
   
     const insertUserQuery = `
       INSERT INTO users (first_name, last_name, username, email, password, gender, dob, mobile, role)
@@ -33,6 +34,7 @@ router.post('/register', (req, res) => {
       const userId = result.insertId;
       console.log('User inserted with ID:', userId);
   
+      // Since default role is 'Passenger', this will almost always execute
       if (role === 'Passenger') {
         console.log('User is a Passenger - inserting into passenger table');
   
@@ -44,14 +46,41 @@ router.post('/register', (req, res) => {
           }
   
           console.log('✅ Passenger inserted successfully');
-          return res.status(201).json({ message: 'Passenger user registered successfully' });
+          return res.status(201).json({ 
+            message: 'Passenger user registered successfully',
+            user: {
+              user_id: userId,
+              first_name,
+              last_name,
+              username,
+              email,
+              gender,
+              dob, 
+              mobile,
+              role
+            }
+          });
         });
       } else {
-        return res.status(201).json({ message: 'User registered successfully' });
+        return res.status(201).json({ 
+          message: 'User registered successfully',
+          user: {
+            user_id: userId,
+            first_name,
+            last_name,
+            username,
+            email,
+            gender,
+            dob, 
+            mobile,
+            role
+          }
+        });
       }
     });
   });
-// ✅ Login User
+
+// Login User
 router.post('/login', (req, res) => {
   const { username, password } = req.body;
 

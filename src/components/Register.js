@@ -14,11 +14,12 @@ const Register = () => {
     gender: '',
     dob: '',
     mobile: '',
-
+    role: 'Passenger' // Always set the default role to Passenger
   });
 
   const { setUser } = useAuth();
   const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -26,18 +27,32 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    
     try {
-      await axios.post('http://localhost:5000/api/users/register', form);
+      console.log('Sending registration data:', form);
+      const registerRes = await axios.post('http://localhost:5000/api/users/register', form);
+      console.log('Registration response:', registerRes.data);
 
+      // If the registration includes the user object, use it directly
+      if (registerRes.data.user) {
+        setUser(registerRes.data.user);
+        navigate('/dashboard');
+        return;
+      }
+
+      // Otherwise, log in after registration
       const loginRes = await axios.post('http://localhost:5000/api/users/login', {
         username: form.username,
         password: form.password
       });
 
+      console.log('Login response:', loginRes.data);
       setUser(loginRes.data.user);
       navigate('/dashboard');
     } catch (err) {
-      alert('Registration failed: ' + (err.response?.data?.error || 'Server error'));
+      console.error('Registration error:', err);
+      setError(err.response?.data?.error || 'Registration failed. Please try again.');
     }
   };
 
@@ -45,16 +60,59 @@ const Register = () => {
     <div className="register-container">
       <form className="register-form" onSubmit={handleSubmit}>
         <h2>Create an Account</h2>
-        <div className="input-group">
-          <input name="first_name" placeholder="First Name" onChange={handleChange} required />
-          <input name="last_name" placeholder="Last Name" onChange={handleChange} required />
-        </div>
-        <input name="username" placeholder="Username" onChange={handleChange} required />
-        <input name="email" placeholder="Email" type="email" onChange={handleChange} required />
-        <input name="password" placeholder="Password" type="password" onChange={handleChange} required />
+        
+        {error && <div className="error-message">{error}</div>}
         
         <div className="input-group">
-          <select name="gender" onChange={handleChange} required>
+          <input 
+            name="first_name" 
+            placeholder="First Name" 
+            value={form.first_name}
+            onChange={handleChange} 
+            required 
+          />
+          <input 
+            name="last_name" 
+            placeholder="Last Name" 
+            value={form.last_name}
+            onChange={handleChange} 
+            required 
+          />
+        </div>
+        
+        <input 
+          name="username" 
+          placeholder="Username" 
+          value={form.username}
+          onChange={handleChange} 
+          required 
+        />
+        
+        <input 
+          name="email" 
+          placeholder="Email" 
+          type="email" 
+          value={form.email}
+          onChange={handleChange} 
+          required 
+        />
+        
+        <input 
+          name="password" 
+          placeholder="Password" 
+          type="password" 
+          value={form.password}
+          onChange={handleChange} 
+          required 
+        />
+        
+        <div className="input-group">
+          <select 
+            name="gender" 
+            value={form.gender}
+            onChange={handleChange} 
+            required
+          >
             <option value="">Select Gender</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
@@ -62,21 +120,26 @@ const Register = () => {
           </select>
 
           <input
-  type="text"
-  name="dob"
-  placeholder="YYYY-MM-DD"
-  pattern="\d{4}-\d{2}-\d{2}"
-  title="Date format: YYYY-MM-DD"
-  onChange={handleChange}
-  required
-/>
-
+            type="text"
+            name="dob"
+            placeholder="YYYY-MM-DD"
+            pattern="\d{4}-\d{2}-\d{2}"
+            title="Date format: YYYY-MM-DD"
+            value={form.dob}
+            onChange={handleChange}
+            required
+          />
         </div>
 
-        <input name="mobile" placeholder="Mobile Number" onChange={handleChange} />
+        <input 
+          name="mobile" 
+          placeholder="Mobile Number" 
+          value={form.mobile}
+          onChange={handleChange} 
+        />
 
+        {/* The role is hard-coded to 'Passenger' in the form state */}
         
-
         <button type="submit" className="register-btn">Register</button>
       </form>
     </div>
