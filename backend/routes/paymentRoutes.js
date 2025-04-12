@@ -109,39 +109,55 @@ router.post('/process', (req, res) => {
         });
       });
       
-      // Create payment record with payment date
       function createPayment(booking_id) {
-        // Insert with payment date and method fields
         const paymentQuery = `
           INSERT INTO payments (booking_id, amount, method, status, payment_date)
           VALUES (?, ?, ?, 'Paid', NOW())
         `;
-        
+      
         db.query(paymentQuery, [booking_id, amount, payment_method], (err) => {
           if (err) {
             return db.rollback(() => {
               console.error('Error creating payment:', err);
-              res.status(500).json({ error: 'Failed to create payment' });
+              return res.status(500).json({ error: 'Failed to create payment' });
             });
           }
-          
-          // Commit transaction
-          db.commit(err => {
+      
+          // ✅ Only update payment_status in bookings table
+          const updateBookingStatusQuery = `
+            UPDATE bookings
+            SET payment_status = ?
+            WHERE booking_id = ?
+          `;
+      
+          db.query(updateBookingStatusQuery, ['Completed', booking_id], (err) => {
             if (err) {
               return db.rollback(() => {
-                console.error('Error committing transaction:', err);
-                res.status(500).json({ error: 'Failed to complete payment' });
+                console.error('Error updating booking payment_status:', err);
+                return res.status(500).json({ error: 'Failed to update booking payment status' });
               });
             }
-            
-            res.status(200).json({
-              success: true,
-              message: 'Payment successful',
-              booking_id: booking_id
+      
+            // ✅ Commit once after everything succeeds
+            db.commit(err => {
+              if (err) {
+                return db.rollback(() => {
+                  console.error('Error committing transaction:', err);
+                  return res.status(500).json({ error: 'Failed to complete payment' });
+                });
+              }
+      
+              // ✅ Only send the response here
+              return res.status(200).json({
+                success: true,
+                message: 'Payment successful',
+                booking_id: booking_id
+              });
             });
           });
         });
       }
+      
     });
   });
 });
