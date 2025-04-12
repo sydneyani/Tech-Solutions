@@ -12,6 +12,7 @@ const Payments = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('credit');
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
@@ -82,13 +83,16 @@ const Payments = ({
 
   // Simplified payment processing - only sending necessary fields
   const processPayment = async () => {
-    if (!cardNumber || !expiryDate || !cvv || !nameOnCard) {
+    // Form validation
+    if ((paymentMethod === 'credit' || paymentMethod === 'debit') && 
+        (!cardNumber || !expiryDate || !cvv || !nameOnCard)) {
       setError('Please fill in all payment details');
       return;
     }
 
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
     
     try {
       // Simplified payload - only sending what the database expects
@@ -122,7 +126,14 @@ const Payments = ({
       }
     } catch (err) {
       console.error('Error during payment:', err);
-      setError(err.response?.data?.error || 'Payment processing failed. Please try again.');
+      
+      // Check for seat already booked error
+      if (err.response?.data?.seatAlreadyBooked) {
+        setError('This seat has already been booked. Please select another seat.');
+      } else {
+        setError(err.response?.data?.error || 'Payment processing failed. Please try again.');
+      }
+      
       setLoading(false);
     }
   };
@@ -163,6 +174,12 @@ const Payments = ({
             )}
           </div>
         </div>
+        
+        {successMessage && (
+          <div className="success-message">
+            {successMessage}
+          </div>
+        )}
         
         <div className="payment-methods">
           <div className="method-selector">
@@ -260,7 +277,7 @@ const Payments = ({
           <button 
             className="pay-btn" 
             onClick={processPayment}
-            disabled={loading}
+            disabled={loading || successMessage}
           >
             {loading ? 'Processing...' : `Pay ${formatCurrency(fareAmount)}`}
           </button>

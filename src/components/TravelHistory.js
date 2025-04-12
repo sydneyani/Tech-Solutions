@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { jsPDF } from 'jspdf'; // Using named import instead
+import { jsPDF } from 'jspdf';
 import './TravelHistory.css';
 
 const TravelHistory = () => {
@@ -9,6 +9,7 @@ const TravelHistory = () => {
   const [travelHistory, setTravelHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   useEffect(() => {
     const fetchTravelHistory = async () => {
@@ -62,6 +63,24 @@ const TravelHistory = () => {
     return timeStr.substring(0, 5); // format HH:MM from HH:MM:SS
   };
 
+  const formatCurrency = (amount) => {
+    if (!amount && amount !== 0) return 'N/A';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  // Open payment details modal
+  const openPaymentDetails = (booking) => {
+    setSelectedBooking(booking);
+  };
+
+  // Close payment details modal
+  const closePaymentDetails = () => {
+    setSelectedBooking(null);
+  };
+
   // Simplified PDF generation without using autoTable
   const downloadPDF = () => {
     try {
@@ -84,10 +103,11 @@ const TravelHistory = () => {
       doc.setFontSize(10);
       doc.setTextColor(0, 87, 146); // Blue color for header
       doc.text('Date', 14, 56);
-      doc.text('Train', 50, 56);
-      doc.text('Route', 100, 56);
-      doc.text('Seat', 150, 56);
-      doc.text('Status', 170, 56);
+      doc.text('Train', 45, 56);
+      doc.text('Route', 85, 56);
+      doc.text('Seat', 130, 56);
+      doc.text('Amount', 150, 56);
+      doc.text('Status', 175, 56);
       
       // Add line under headers
       doc.setDrawColor(0, 87, 146);
@@ -108,9 +128,13 @@ const TravelHistory = () => {
         
         doc.setFontSize(9);
         doc.text(formatDate(booking.travel_date), 14, yPos);
-        doc.text(booking.train_name || 'N/A', 50, yPos);
-        doc.text(booking.route_name || 'N/A', 100, yPos);
-        doc.text(booking.seat_number || 'N/A', 150, yPos);
+        doc.text(booking.train_name || 'N/A', 45, yPos);
+        doc.text(booking.route_name || 'N/A', 85, yPos);
+        doc.text(booking.seat_number || 'N/A', 130, yPos);
+        
+        // Add payment amount
+        const amountText = booking.amount ? formatCurrency(booking.amount) : 'N/A';
+        doc.text(amountText, 150, yPos);
         
         // Set color based on status
         if (booking.status === 'Completed') {
@@ -121,7 +145,7 @@ const TravelHistory = () => {
           doc.setTextColor(0, 0, 0); // Black
         }
         
-        doc.text(booking.status || 'Completed', 170, yPos);
+        doc.text(booking.status || 'Completed', 175, yPos);
         doc.setTextColor(0, 0, 0); // Reset to black
         
         // Add a light line below each entry
@@ -148,6 +172,47 @@ const TravelHistory = () => {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please check console for details.');
     }
+  };
+
+  // Payment details modal component - simplified
+  const PaymentDetailsModal = ({ booking }) => {
+    if (!booking) return null;
+    
+    return (
+      <div className="payment-modal-overlay">
+        <div className="payment-modal">
+          <div className="payment-modal-header">
+            <h3>Payment Details</h3>
+            <button className="close-modal-btn" onClick={closePaymentDetails}>×</button>
+          </div>
+          <div className="payment-modal-content">
+            <div className="payment-detail-row">
+              <span className="payment-label">Amount:</span>
+              <span className="payment-value">{formatCurrency(booking.amount)}</span>
+            </div>
+            <div className="payment-detail-row">
+              <span className="payment-label">Payment Date:</span>
+              <span className="payment-value">{booking.payment_date ? formatDate(booking.payment_date) : 'Not available'}</span>
+            </div>
+            <div className="payment-detail-row">
+              <span className="payment-label">Payment Method:</span>
+              <span className="payment-value">{booking.method || 'Not available'}</span>
+            </div>
+            <div className="payment-detail-row">
+              <span className="payment-label">Booking ID:</span>
+              <span className="payment-value">{booking.booking_id}</span>
+            </div>
+            <div className="payment-detail-row">
+              <span className="payment-label">Ticket ID:</span>
+              <span className="payment-value">{booking.ticket_id || 'Not available'}</span>
+            </div>
+          </div>
+          <div className="payment-modal-footer">
+            <button className="close-modal-btn-secondary" onClick={closePaymentDetails}>Close</button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (!user) {
@@ -206,7 +271,9 @@ const TravelHistory = () => {
                   <th>Arrival</th>
                   <th>Seat</th>
                   <th>Ticket ID</th>
+                  <th>Amount</th>
                   <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -219,16 +286,30 @@ const TravelHistory = () => {
                     <td>{formatTime(booking.arrival_time)}</td>
                     <td>{booking.seat_number}</td>
                     <td>{booking.ticket_id || 'N/A'}</td>
+                    <td className="amount-cell">{booking.amount ? formatCurrency(booking.amount) : 'N/A'}</td>
                     <td>
                       <span className={`status-badge ${booking.status?.toLowerCase() || 'completed'}`}>
                         {booking.status || 'Completed'}
                       </span>
+                    </td>
+                    <td>
+                      <button 
+                        className="view-payment-btn"
+                        onClick={() => openPaymentDetails(booking)}
+                        disabled={!booking.amount}
+                        title={booking.amount ? "View payment details" : "No payment information available"}
+                      >
+                        💳
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          
+          {/* Payment Details Modal */}
+          {selectedBooking && <PaymentDetailsModal booking={selectedBooking} />}
         </>
       )}
     </div>

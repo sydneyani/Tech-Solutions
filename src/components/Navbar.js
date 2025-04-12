@@ -1,3 +1,4 @@
+// src/components/Navbar.js
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -32,19 +33,22 @@ const Navbar = () => {
             <Link to="/dashboard">Dashboard</Link>
             <Link to="/view-schedule">View Schedule</Link>
             
-            {/* Show Travel History for both Passenger and Staff */}
+            {/* Book Train link for both Passenger and Staff */}
+            {(user.role === 'Passenger' || user.role === 'Staff') && (
+              <Link to="/book-train">Book Train</Link>
+            )}
+            
+            {/* Travel History for both Passenger and Staff */}
             {(user.role === 'Passenger' || user.role === 'Staff') && (
               <Link to="/travel-history">Travel History</Link>
             )}
             
-            {user.role === 'Passenger' && (
-              <Link to="/book-train">Book Train</Link>
-            )}
-            
+            {/* Staff-specific links */}
             {user.role === 'Staff' && (
               <Link to="/manage-rides">Manage Rides</Link>
             )}
             
+            {/* Admin-specific links */}
             {user.role === 'Admin' && (
               <Link to="/admin">Admin Panel</Link>
             )}

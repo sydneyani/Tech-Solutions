@@ -25,13 +25,18 @@ router.get('/rides-with-passengers', (req, res) => {
         bd.passenger_name AS booked_passenger_name,
         seats.seat_id,
         seats.seat_number,
-        seats.class_type
+        seats.class_type,
+        p.amount,
+        p.method,
+        p.payment_date,
+        p.status AS payment_status
       FROM seats
       JOIN booking_details bd ON seats.seat_id = bd.seat_id
       JOIN bookings b ON bd.booking_id = b.booking_id
       JOIN schedules s ON b.schedule_id = s.schedule_id
       JOIN trains t ON s.train_id = t.train_id
       JOIN users u ON b.user_id = u.user_id
+      LEFT JOIN payments p ON b.booking_id = p.booking_id
       WHERE seats.is_booked = 1
       ORDER BY s.travel_date ASC, s.schedule_id
     `;
@@ -44,16 +49,6 @@ router.get('/rides-with-passengers', (req, res) => {
   
       console.log(`Retrieved ${results.length} passenger records`);
       
-      // Debug: Check sample data
-      if (results.length > 0) {
-        const sample = results[0];
-        console.log('Sample raw result row:', {
-          schedule_id: sample.schedule_id,
-          seat_number: sample.seat_number,
-          passenger_name: sample.passenger_name
-        });
-      }
-  
       // Group results by schedule
       const grouped = {};
       results.forEach(row => {
@@ -83,24 +78,17 @@ router.get('/rides-with-passengers', (req, res) => {
           mobile: row.mobile,
           gender: row.gender,
           age: row.age,
-          class_type: row.class_type
+          class_type: row.class_type,
+          payment_amount: row.amount,
+          payment_method: row.method,
+          payment_date: row.payment_date,
+          payment_status: row.payment_status
         };
         
         grouped[row.schedule_id].passengers.push(passenger);
       });
   
-      // Final verification
-      const response = Object.values(grouped);
-      if (response.length > 0 && response[0].passengers.length > 0) {
-        const firstPassenger = response[0].passengers[0];
-        console.log('First passenger in processed response:', {
-          schedule_id: firstPassenger.schedule_id,
-          seat_number: firstPassenger.seat_number,
-          name: firstPassenger.passenger_name
-        });
-      }
-  
-      res.json(response);
+      res.json(Object.values(grouped));
     });
   });
 
@@ -177,9 +165,9 @@ router.get('/:user_id/history', (req, res) => {
     }
   });
   
-  // Function to fetch travel history
+  // Function to fetch travel history with payment date and method
   const fetchTravelHistory = () => {
-    // Create query that fetches travel history with details from multiple tables
+    // Updated query to include only necessary payment details
     const historyQuery = `
       SELECT 
         b.booking_id,
@@ -201,8 +189,9 @@ router.get('/:user_id/history', (req, res) => {
           WHEN p.status = 'Failed' THEN 'Payment Failed'
           ELSE 'Pending'
         END AS status,
-        p.payment_id,
         p.amount,
+        p.method,
+        p.payment_date,
         th.history_id,
         th.trip_date
       FROM bookings b

@@ -21,6 +21,12 @@ const BookTrain = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if user is logged in and has appropriate role
+    if (user && user.role !== 'Passenger' && user.role !== 'Staff' && user.role !== 'Admin') {
+      navigate('/dashboard');
+      return;
+    }
+    
     const fetchSchedules = async () => {
       try {
         setLoading(true);
@@ -34,7 +40,7 @@ const BookTrain = () => {
       }
     };
     fetchSchedules();
-  }, []);
+  }, [user, navigate]);
 
   const formatTime = (timeStr) => {
     if (!timeStr) return '';
@@ -51,6 +57,28 @@ const BookTrain = () => {
       month: 'short',
       day: 'numeric',
     });
+  };
+  
+  // Helper function to properly format the issued date
+  const formatIssuedDate = (dateStr) => {
+    try {
+      if (!dateStr) return 'Not available';
+      
+      // Try to parse the date
+      const date = new Date(dateStr);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.log('Invalid date format:', dateStr);
+        return new Date().toLocaleString(); // Fallback to current date
+      }
+      
+      // Return formatted date
+      return date.toLocaleString();
+    } catch (error) {
+      console.error('Error formatting issued date:', error);
+      return new Date().toLocaleString(); // Fallback to current date
+    }
   };
 
   const bookSeat = async (schedule) => {
@@ -78,6 +106,7 @@ const BookTrain = () => {
   };
 
   const handlePaymentSuccess = (ticketData) => {
+    console.log('Payment success, ticket data:', ticketData);
     setTicket(ticketData);
     setShowPaymentModal(false);
     setShowSeatModal(false);
@@ -107,6 +136,13 @@ const BookTrain = () => {
     };
     fetchSchedules();
   };
+
+  // If user not logged in or not a passenger/staff/admin, don't show the component
+  if (!user || (user.role !== 'Passenger' && user.role !== 'Staff' && user.role !== 'Admin')) {
+    return <div className="booktrain-container">
+      <div className="auth-message">You don't have permission to access this page.</div>
+    </div>;
+  }
 
   return (
     <div className="booktrain-container">
@@ -224,12 +260,12 @@ const BookTrain = () => {
             <h3>🎫 Ticket Confirmed!</h3>
             <div className="ticket-details">
               <p><strong>Ticket ID:</strong> {ticket.ticket_id}</p>
-              <p><strong>Train:</strong> {selectedScheduleData?.train_name}</p>
-              <p><strong>Date:</strong> {formatDate(selectedScheduleData?.travel_date)}</p>
-              <p><strong>Time:</strong> {formatTime(selectedScheduleData?.departure_time)} to {formatTime(selectedScheduleData?.arrival_time)}</p>
-              <p><strong>Seat:</strong> {selectedSeat?.seat_number}</p>
-              <p><strong>Passenger:</strong> {user?.first_name} {user?.last_name}</p>
-              <p><strong>Issued:</strong> {new Date(ticket.issued_date).toLocaleString()}</p>
+              <p><strong>Train:</strong> {ticket.train_name || selectedScheduleData?.train_name}</p>
+              <p><strong>Date:</strong> {formatDate(ticket.travel_date || selectedScheduleData?.travel_date)}</p>
+              <p><strong>Time:</strong> {formatTime(ticket.departure_time || selectedScheduleData?.departure_time)} to {formatTime(ticket.arrival_time || selectedScheduleData?.arrival_time)}</p>
+              <p><strong>Seat:</strong> {ticket.seat_number || selectedSeat?.seat_number}</p>
+              <p><strong>Passenger:</strong> {ticket.passenger_name || `${user?.first_name} ${user?.last_name}`}</p>
+              <p><strong>Issued:</strong> {formatIssuedDate(ticket.issued_date)}</p>
             </div>
             <div className="ticket-actions">
               <button onClick={handleBookingComplete}>Done</button>

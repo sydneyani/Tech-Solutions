@@ -280,4 +280,15 @@
     .cancel-btn, .pay-btn {
       width: 100%;
     }
+
+    .success-message {
+      background-color: #e0f7eb;
+      color: #0e9f6e;
+      padding: 12px;
+      border-radius: 4px;
+      margin: 0 20px 20px;
+      text-align: center;
+      font-weight: 500;
+      border-left: 4px solid #0e9f6e;
+    }
   }

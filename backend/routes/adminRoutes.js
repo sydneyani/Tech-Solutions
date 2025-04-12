@@ -192,117 +192,210 @@ router.put('/edit-schedule/:schedule_id', (req, res) => {
 
   // Add this to your admin routes.js file
 
-// Remove a passenger by schedule_id and seat_number
+// Remove a passenger by schedule_id and seat_number with full booking cleanup
 router.delete('/remove-passenger/schedule/:schedule_id/seat/:seat_number', (req, res) => {
-    const { schedule_id, seat_number } = req.params;
+  const { schedule_id, seat_number } = req.params;
+  
+  console.log(`Attempting to free up seat: schedule=${schedule_id}, seat_number=${seat_number}`);
+  
+  // First find the seat ID using schedule_id and seat_number
+  const findSeatQuery = `
+    SELECT seat_id, is_booked, class_type 
+    FROM seats 
+    WHERE schedule_id = ? AND seat_number = ?
+  `;
+  
+  db.query(findSeatQuery, [schedule_id, seat_number], (findErr, seatResults) => {
+    if (findErr) {
+      console.error('Error finding seat:', findErr);
+      return res.status(500).json({ error: 'Database error finding seat' });
+    }
     
-    console.log(`Attempting to free up seat: schedule=${schedule_id}, seat_number=${seat_number}`);
+    if (seatResults.length === 0) {
+      console.error(`Seat not found: schedule=${schedule_id}, seat_number=${seat_number}`);
+      return res.status(404).json({ error: 'Seat not found' });
+    }
     
-    // First find the seat ID using schedule_id and seat_number
-    const findSeatQuery = `
-      SELECT seat_id, is_booked, class_type 
-      FROM seats 
-      WHERE schedule_id = ? AND seat_number = ?
+    const seat = seatResults[0];
+    console.log('Found seat:', seat);
+    
+    if (!seat.is_booked) {
+      console.warn(`Seat ${seat_number} in schedule ${schedule_id} is not currently booked`);
+      return res.status(400).json({ error: 'Seat is not currently booked' });
+    }
+    
+    const seat_id = seat.seat_id;
+    
+    // Find the booking detail for this seat
+    const findBookingDetailQuery = `
+      SELECT bd.booking_detail_id, bd.booking_id, bd.passenger_name
+      FROM booking_details bd
+      WHERE bd.seat_id = ?
     `;
     
-    db.query(findSeatQuery, [schedule_id, seat_number], (findErr, seatResults) => {
-      if (findErr) {
-        console.error('Error finding seat:', findErr);
-        return res.status(500).json({ error: 'Database error finding seat' });
+    db.query(findBookingDetailQuery, [seat_id], (detailErr, detailResults) => {
+      if (detailErr) {
+        console.error('Error finding booking detail:', detailErr);
+        return res.status(500).json({ error: 'Database error finding booking detail' });
       }
       
-      if (seatResults.length === 0) {
-        console.error(`Seat not found: schedule=${schedule_id}, seat_number=${seat_number}`);
-        return res.status(404).json({ error: 'Seat not found' });
+      if (detailResults.length === 0) {
+        console.warn(`Seat ${seat_number} is marked as booked but has no booking detail`);
+      } else {
+        console.log('Found booking detail:', detailResults[0]);
       }
       
-      const seat = seatResults[0];
-      console.log('Found seat:', seat);
-      
-      if (!seat.is_booked) {
-        console.warn(`Seat ${seat_number} in schedule ${schedule_id} is not currently booked`);
-        return res.status(400).json({ error: 'Seat is not currently booked' });
-      }
-      
-      const seat_id = seat.seat_id;
-      
-      // Find the booking detail for this seat
-      const findBookingDetailQuery = `
-        SELECT bd.booking_detail_id, bd.booking_id, bd.passenger_name
-        FROM booking_details bd
-        WHERE bd.seat_id = ?
-      `;
-      
-      db.query(findBookingDetailQuery, [seat_id], (detailErr, detailResults) => {
-        if (detailErr) {
-          console.error('Error finding booking detail:', detailErr);
-          return res.status(500).json({ error: 'Database error finding booking detail' });
+      // Transaction to update the seat and remove booking detail
+      db.beginTransaction(err => {
+        if (err) {
+          console.error('Error starting transaction:', err);
+          return res.status(500).json({ error: 'Database error starting transaction' });
         }
         
-        if (detailResults.length === 0) {
-          console.warn(`Seat ${seat_number} is marked as booked but has no booking detail`);
-        } else {
-          console.log('Found booking detail:', detailResults[0]);
-        }
+        // 1. Update seat to mark as not booked
+        const updateSeatQuery = `
+          UPDATE seats 
+          SET is_booked = 0 
+          WHERE seat_id = ?
+        `;
         
-        // Transaction to update the seat and remove booking detail
-        db.beginTransaction(err => {
-          if (err) {
-            console.error('Error starting transaction:', err);
-            return res.status(500).json({ error: 'Database error starting transaction' });
+        db.query(updateSeatQuery, [seat_id], (updateErr) => {
+          if (updateErr) {
+            return db.rollback(() => {
+              console.error('Error updating seat:', updateErr);
+              res.status(500).json({ error: 'Failed to update seat' });
+            });
           }
           
-          // 1. Update seat to mark as not booked
-          const updateSeatQuery = `
-            UPDATE seats 
-            SET is_booked = 0 
-            WHERE seat_id = ?
-          `;
+          console.log(`Successfully marked seat ${seat_number} as not booked`);
           
-          db.query(updateSeatQuery, [seat_id], (updateErr) => {
-            if (updateErr) {
-              return db.rollback(() => {
-                console.error('Error updating seat:', updateErr);
-                res.status(500).json({ error: 'Failed to update seat' });
-              });
-            }
+          // If we have a booking detail, remove it
+          if (detailResults.length > 0) {
+            const bookingDetail = detailResults[0];
+            const deleteDetailQuery = `
+              DELETE FROM booking_details 
+              WHERE booking_detail_id = ?
+            `;
             
-            console.log(`Successfully marked seat ${seat_number} as not booked`);
-            
-            // If we have a booking detail, remove it
-            if (detailResults.length > 0) {
-              const bookingDetail = detailResults[0];
-              const deleteDetailQuery = `
-                DELETE FROM booking_details 
-                WHERE booking_detail_id = ?
+            db.query(deleteDetailQuery, [bookingDetail.booking_detail_id], (deleteErr) => {
+              if (deleteErr) {
+                return db.rollback(() => {
+                  console.error('Error deleting booking detail:', deleteErr);
+                  res.status(500).json({ error: 'Failed to delete booking detail' });
+                });
+              }
+              
+              console.log(`Successfully deleted booking detail ${bookingDetail.booking_detail_id}`);
+              
+              // Check if this was the last seat for this booking
+              const checkRemainingSeatsQuery = `
+                SELECT COUNT(*) as count
+                FROM booking_details
+                WHERE booking_id = ?
               `;
               
-              db.query(deleteDetailQuery, [bookingDetail.booking_detail_id], (deleteErr) => {
-                if (deleteErr) {
+              db.query(checkRemainingSeatsQuery, [bookingDetail.booking_id], (countErr, countResults) => {
+                if (countErr) {
                   return db.rollback(() => {
-                    console.error('Error deleting booking detail:', deleteErr);
-                    res.status(500).json({ error: 'Failed to delete booking detail' });
+                    console.error('Error counting remaining seats:', countErr);
+                    res.status(500).json({ error: 'Failed to check remaining seats' });
                   });
                 }
                 
-                console.log(`Successfully deleted booking detail ${bookingDetail.booking_detail_id}`);
+                const seatsRemaining = countResults[0].count;
+                console.log(`Seats remaining for booking ${bookingDetail.booking_id}: ${seatsRemaining}`);
                 
-                // Check if this was the last seat for this booking
-                const checkRemainingSeatsQuery = `
-                  SELECT COUNT(*) as count
-                  FROM booking_details
-                  WHERE booking_id = ?
-                `;
-                
-                db.query(checkRemainingSeatsQuery, [bookingDetail.booking_id], (countErr, countResults) => {
-                  if (countErr) {
-                    return db.rollback(() => {
-                      console.error('Error counting remaining seats:', countErr);
-                      res.status(500).json({ error: 'Failed to check remaining seats' });
-                    });
-                  }
+                // If this was the last seat, clean up the booking and associated records
+                if (seatsRemaining === 0) {
+                  console.log(`Cleaning up booking ${bookingDetail.booking_id} as it has no more seats`);
                   
-                  // Commit the transaction
+                  // Clean up related records in this order:
+                  // 1. Delete from travel_history if exists
+                  // 2. Delete from tickets if exists
+                  // 3. Delete from payments if exists
+                  // 4. Finally delete the booking record
+                  
+                  // 1. Delete from travel_history
+                  const deleteTravelHistoryQuery = `
+                    DELETE FROM travel_history 
+                    WHERE booking_id = ?
+                  `;
+                  
+                  db.query(deleteTravelHistoryQuery, [bookingDetail.booking_id], (historyErr) => {
+                    if (historyErr) {
+                      console.error('Error deleting travel history:', historyErr);
+                      // Continue even if this fails
+                    }
+                    
+                    // 2. Delete from tickets
+                    const deleteTicketsQuery = `
+                      DELETE FROM tickets 
+                      WHERE booking_id = ?
+                    `;
+                    
+                    db.query(deleteTicketsQuery, [bookingDetail.booking_id], (ticketsErr) => {
+                      if (ticketsErr) {
+                        console.error('Error deleting tickets:', ticketsErr);
+                        // Continue even if this fails
+                      }
+                      
+                      // 3. Delete from payments
+                      const deletePaymentsQuery = `
+                        DELETE FROM payments 
+                        WHERE booking_id = ?
+                      `;
+                      
+                      db.query(deletePaymentsQuery, [bookingDetail.booking_id], (paymentsErr) => {
+                        if (paymentsErr) {
+                          console.error('Error deleting payments:', paymentsErr);
+                          // Continue even if this fails
+                        }
+                        
+                        // 4. Delete the booking record
+                        const deleteBookingQuery = `
+                          DELETE FROM bookings 
+                          WHERE booking_id = ?
+                        `;
+                        
+                        db.query(deleteBookingQuery, [bookingDetail.booking_id], (bookingErr) => {
+                          if (bookingErr) {
+                            return db.rollback(() => {
+                              console.error('Error deleting booking:', bookingErr);
+                              res.status(500).json({ error: 'Failed to delete booking' });
+                            });
+                          }
+                          
+                          console.log(`Successfully deleted booking ${bookingDetail.booking_id}`);
+                          
+                          // Commit the transaction
+                          db.commit(err => {
+                            if (err) {
+                              return db.rollback(() => {
+                                console.error('Error committing transaction:', err);
+                                res.status(500).json({ error: 'Failed to commit changes' });
+                              });
+                            }
+                            
+                            console.log(`Successfully removed passenger from seat ${seat_number} and cleaned up booking ${bookingDetail.booking_id}`);
+                            
+                            res.status(200).json({ 
+                              message: 'Passenger and booking removed successfully',
+                              seat: {
+                                schedule_id,
+                                seat_number,
+                                class_type: seat.class_type
+                              },
+                              passenger: bookingDetail.passenger_name,
+                              bookingRemoved: true,
+                              bookingId: bookingDetail.booking_id
+                            });
+                          });
+                        });
+                      });
+                    });
+                  });
+                } else {
+                  // Seats remaining, just commit the current changes
                   db.commit(err => {
                     if (err) {
                       return db.rollback(() => {
@@ -311,7 +404,6 @@ router.delete('/remove-passenger/schedule/:schedule_id/seat/:seat_number', (req,
                       });
                     }
                     
-                    const seatsRemaining = countResults[0].count;
                     console.log(`Successfully removed passenger from seat ${seat_number}. Remaining seats for booking: ${seatsRemaining}`);
                     
                     res.status(200).json({ 
@@ -325,33 +417,35 @@ router.delete('/remove-passenger/schedule/:schedule_id/seat/:seat_number', (req,
                       seatsRemaining
                     });
                   });
-                });
-              });
-            } else {
-              // No booking detail found, just commit the seat update
-              db.commit(err => {
-                if (err) {
-                  return db.rollback(() => {
-                    console.error('Error committing transaction:', err);
-                    res.status(500).json({ error: 'Failed to commit changes' });
-                  });
                 }
-                
-                console.log(`Successfully freed up seat ${seat_number}`);
-                res.status(200).json({ 
-                  message: 'Seat freed up successfully',
-                  seat: {
-                    schedule_id,
-                    seat_number,
-                    class_type: seat.class_type
-                  }
-                });
               });
-            }
-          });
+            });
+          } else {
+            // No booking detail found, just commit the seat update
+            db.commit(err => {
+              if (err) {
+                return db.rollback(() => {
+                  console.error('Error committing transaction:', err);
+                  res.status(500).json({ error: 'Failed to commit changes' });
+                });
+              }
+              
+              console.log(`Successfully freed up seat ${seat_number}`);
+              res.status(200).json({ 
+                message: 'Seat freed up successfully',
+                seat: {
+                  schedule_id,
+                  seat_number,
+                  class_type: seat.class_type
+                }
+              });
+            });
+          }
         });
       });
     });
   });
+});
+
 
 module.exports = router;

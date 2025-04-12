@@ -27,11 +27,11 @@ router.get('/:user_id', (req, res) => {
   });
 });
 
-// Get travel history for a passenger
+// Get travel history for a passenger with payment date and method
 router.get('/:user_id/history', (req, res) => {
   const { user_id } = req.params;
   
-  // Create query that fetches travel history with details from multiple tables
+  // Create query that fetches travel history with details including payment date and method
   const query = `
     SELECT 
       b.booking_id,
@@ -53,8 +53,9 @@ router.get('/:user_id/history', (req, res) => {
         WHEN p.status = 'Failed' THEN 'Payment Failed'
         ELSE 'Pending'
       END AS status,
-      p.payment_id,
       p.amount,
+      p.method,
+      p.payment_date,
       th.history_id,
       th.trip_date
     FROM bookings b

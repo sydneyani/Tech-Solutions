@@ -62,4 +62,26 @@
   .register-btn:hover {
     background-color: #0056b3;
   }
+  .date-input {
+    position: relative;
+  }
   
+  .date-input::placeholder {
+    color: #aaa;
+  }
+  
+  .error-message {
+    background-color: #fff2f0;
+    color: #e74c3c;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    border-left: 4px solid #e74c3c;
+    font-size: 0.9rem;
+  }
+  
+  /* You can add this if you want to improve focus states for date input */
+  .date-input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  }
