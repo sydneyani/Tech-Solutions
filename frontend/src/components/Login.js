@@ -15,7 +15,8 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/users/login`, form);
+      const API_URL = process.env.REACT_APP_API_BASE_URL || 'https://tech-solutions-production-e796.up.railway.app';
+      const res = await axios.post(`${API_URL}/api/users/login`, form);
       setUser(res.data.user);
       navigate('/dashboard'); // 🔁 Redirect on successful login
     } catch (err) {
