@@ -13,10 +13,17 @@ const app = express();
 
 
 
+const allowedOrigins = [
+  'https://tech-solutions-production-e796.up.railway.app'
+];
+
 app.use(cors({
-  origin: (origin, callback) => {
-    console.log("CORS request from:", origin);
-    callback(null, origin); // allow all origins dynamically
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS Not Allowed'));
+    }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
