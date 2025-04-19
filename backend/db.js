@@ -1,13 +1,10 @@
 const mysql = require('mysql2');
-require('dotenv').config();
 
-const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306 // Add this line
-});
+// Use the exact connection string from Railway
+const connectionString = 'mysql://root:PjnewpNEsVkXpbaDLdIwSeNRxQSnfSzZ@trolley.proxy.rlwy.net:21387/railway';
+
+// Create connection
+const db = mysql.createConnection(connectionString);
 
 db.connect((err) => {
   if (err) {
