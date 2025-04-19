@@ -8,19 +8,23 @@ const staffRoutes = require('./routes/staffRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const passengerRoutes = require('./routes/passengerRoutes');
-
-
 const fs = require('fs');
 const path = require('path');
 
 const app = express();
 
-// Middleware
+// CORS setup - must be before any other middleware
 app.use(cors({
-  origin: 'https://tech-solutions-production-e796.up.railway.app',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: '*',  // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
+
+// Handle preflight requests
+app.options('*', cors());
+
+// JSON middleware
 app.use(express.json());
 
 // Logger with request body
@@ -29,10 +33,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// Database setup
 if (process.env.SETUP_DB === 'true') {
   console.log('Running database setup...');
   require('./db-setup');
 }
+
 // Test routes
 app.get('/api/test', (req, res) => {
   res.status(200).json({ message: 'API is working!' });
@@ -59,7 +65,6 @@ app.use((req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
