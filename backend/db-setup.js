@@ -2,13 +2,10 @@ const mysql = require('mysql2');
 const fs = require('fs');
 const path = require('path');
 
-// Create connection using Railway environment variables
+// Use the exact connection string from Railway
+const connectionString = 'mysql://root:PjnewpNEsVkXpbaDLdIwSeNRxQSnfSzZ@trolley.proxy.rlwy.net:21387/railway';
 const connection = mysql.createConnection({
-  host: process.env.DB_HOST || process.env.MYSQLHOST,
-  user: process.env.DB_USER || process.env.MYSQLUSER,
-  password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD,
-  database: process.env.DB_NAME || process.env.MYSQLDATABASE,
-  port: process.env.DB_PORT || process.env.MYSQLPORT || 3306,
+  uri: connectionString,
   multipleStatements: true // This is crucial to run multiple SQL statements at once
 });
 
