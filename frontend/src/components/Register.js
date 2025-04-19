@@ -31,7 +31,7 @@ const Register = () => {
     
     try {
       console.log('Sending registration data:', form);
-      const registerRes = await axios.post('http://localhost:5000/api/users/register', form);
+      const registerRes = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/users/register`, form);
       console.log('Registration response:', registerRes.data);
 
       // If the registration includes the user object, use it directly
@@ -42,7 +42,7 @@ const Register = () => {
       }
 
       // Otherwise, log in after registration
-      const loginRes = await axios.post('http://localhost:5000/api/users/login', {
+      const loginRes = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/users/login`, {
         username: form.username,
         password: form.password
       });

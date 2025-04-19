@@ -15,7 +15,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/api/users/login', form);
+      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/users/login`, form);
       setUser(res.data.user);
       navigate('/dashboard'); // 🔁 Redirect on successful login
     } catch (err) {

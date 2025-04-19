@@ -107,13 +107,13 @@ const Payments = ({
       console.log('Payment data being sent:', paymentData);
       
       // Process payment
-      const paymentResponse = await axios.post('http://localhost:5000/api/payments/process', paymentData);
+      const paymentResponse = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/payments/process`, paymentData);
       
       console.log('Payment response:', paymentResponse.data);
       
       if (paymentResponse.data.success) {
         // Create ticket after successful payment
-        const ticketResponse = await axios.post('http://localhost:5000/api/tickets/create', {
+        const ticketResponse = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/tickets/create`, {
           booking_id: paymentResponse.data.booking_id
         });
         

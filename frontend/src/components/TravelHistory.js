@@ -22,9 +22,9 @@ const TravelHistory = () => {
         // Determine which endpoint to use based on user role
         let endpoint;
         if (user.role === 'Passenger') {
-          endpoint = `http://localhost:5000/api/passengers/${user.user_id}/history`;
+          endpoint = `${process.env.REACT_APP_API_BASE_URL}/api/passengers/${user.user_id}/history`;
         } else if (user.role === 'Staff') {
-          endpoint = `http://localhost:5000/api/staff/${user.user_id}/history`;
+          endpoint = `${process.env.REACT_APP_API_BASE_URL}/api/staff/${user.user_id}/history`;
         } else {
           // If role is neither Passenger nor Staff, show error
           setError('Access denied. Only passengers and staff can view travel history.');

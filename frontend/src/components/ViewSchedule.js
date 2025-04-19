@@ -6,7 +6,7 @@ const ViewSchedule = () => {
   const [schedules, setSchedules] = useState([]);
 
   const fetchSchedules = async () => {
-    const res = await axios.get('http://localhost:5000/api/schedules');
+    const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/schedules`);
     setSchedules(res.data);
   };
 

@@ -30,7 +30,7 @@ const BookTrain = () => {
     const fetchSchedules = async () => {
       try {
         setLoading(true);
-        const res = await axios.get('http://localhost:5000/api/schedules');
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/schedules`);
         setSchedules(res.data);
         setLoading(false);
       } catch (err) {
@@ -86,7 +86,7 @@ const BookTrain = () => {
       setLoading(true);
       setError(null);
       
-      const res = await axios.get(`http://localhost:5000/api/schedules/seats/${schedule.schedule_id}`);
+      const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/schedules/seats/${schedule.schedule_id}`);
       setSelectedSchedule(schedule.schedule_id);
       setSelectedScheduleData(schedule);
       setSeats(res.data);
@@ -128,7 +128,7 @@ const BookTrain = () => {
     // Refresh schedules to show updated seat availability
     const fetchSchedules = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/schedules');
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/schedules`);
         setSchedules(res.data);
       } catch (err) {
         console.error('Error fetching schedules:', err);

@@ -19,8 +19,8 @@ const AdminPanel = () => {
   const [newRouteName, setNewRouteName] = useState('');
 
   const fetchData = async () => {
-    const trainsRes = await axios.get('http://localhost:5000/api/schedules/trains');
-    const schedulesRes = await axios.get('http://localhost:5000/api/schedules');
+    const trainsRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/schedules/trains`);
+    const schedulesRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/schedules`);
 
     const trainsWithSchedules = trainsRes.data.map(train => ({
       ...train,
@@ -32,7 +32,7 @@ const AdminPanel = () => {
 
   useEffect(() => {
     fetchData();
-    axios.get('http://localhost:5000/api/routes').then(res => setRouteList(res.data));
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/routes`).then(res => setRouteList(res.data));
   }, []);
 
   const handleTrainChange = (e) => setTrain({ ...train, [e.target.name]: e.target.value });
@@ -40,7 +40,7 @@ const AdminPanel = () => {
 
   const submitTrain = async (e) => {
     e.preventDefault();
-    await axios.post('http://localhost:5000/api/admin/add-train', train);
+    await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/admin/add-train`, train);
     alert('Train added!');
     setTrain({ train_number: '', name: '', route_id: '' });
     fetchData();
@@ -48,27 +48,27 @@ const AdminPanel = () => {
 
   const submitSchedule = async (e) => {
     e.preventDefault();
-    await axios.post('http://localhost:5000/api/admin/add-schedule', schedule);
+    await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/admin/add-schedule`, schedule);
     alert('Schedule added!');
     setSchedule({ train_id: '', travel_date: '', departure_time: '', arrival_time: '' });
     fetchData();
   };
 
   const removeTrain = async (train_id) => {
-    await axios.delete(`http://localhost:5000/api/admin/delete-train/${train_id}`);
+    await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/admin/delete-train/${train_id}`);
     alert('Train removed!');
     fetchData();
   };
 
   const removeSchedule = async (schedule_id) => {
-    await axios.delete(`http://localhost:5000/api/admin/delete-schedule/${schedule_id}`);
+    await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/admin/delete-schedule/${schedule_id}`);
     alert('Schedule removed!');
     fetchData();
   };
 
   const createRoute = async () => {
     if (!newRouteName.trim()) return;
-    const res = await axios.post('http://localhost:5000/api/routes', { name: newRouteName });
+    const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/routes`, { name: newRouteName });
     setRouteList([...routeList, res.data]);
     setNewRouteName('');
   };
@@ -94,14 +94,14 @@ const AdminPanel = () => {
   };
 
   const submitEditTrain = async () => {
-    await axios.put(`http://localhost:5000/api/admin/edit-train/${editTrainData.train_id}`, editTrainData);
+    await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/admin/edit-train/${editTrainData.train_id}`, editTrainData);
     alert('Train updated!');
     setEditTrainData(null);
     fetchData();
   };
 
   const submitEditSchedule = async () => {
-    await axios.put(`http://localhost:5000/api/admin/edit-schedule/${editScheduleData.schedule_id}`, editScheduleData);
+    await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/admin/edit-schedule/${editScheduleData.schedule_id}`, editScheduleData);
     alert('Schedule updated!');
     setEditScheduleData(null);
     fetchData();

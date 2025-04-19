@@ -16,7 +16,7 @@ const ManageRides = () => {
       setLoading(true);
       setError(null);
       
-      const res = await axios.get('http://localhost:5000/api/staff/rides-with-passengers');
+      const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/staff/rides-with-passengers`);
       console.log('Rides data:', res.data);
       setSchedules(res.data);
       setLoading(false);
@@ -84,7 +84,7 @@ const ManageRides = () => {
       
       // Using the new endpoint that works with schedule_id and seat_number from context
       const response = await axios.delete(
-        `http://localhost:5000/api/admin/remove-passenger/schedule/${schedule_id}/seat/${seat_number}`
+        `${process.env.REACT_APP_API_BASE_URL}/api/admin/remove-passenger/schedule/${schedule_id}/seat/${seat_number}`
       );
       
       console.log('Remove response:', response.data);
