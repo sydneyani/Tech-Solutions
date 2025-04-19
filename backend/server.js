@@ -8,28 +8,18 @@ const staffRoutes = require('./routes/staffRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const passengerRoutes = require('./routes/passengerRoutes');
-const fs = require('fs');
-const path = require('path');
 
 const app = express();
 
-// CORS setup - must be before any other middleware
-app.use(cors({
-  origin: '*',  // Allow all origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
-
-// Handle preflight requests
-app.options('*', cors());
+// CORS setup - simpler configuration
+app.use(cors());
 
 // JSON middleware
 app.use(express.json());
 
-// Logger with request body
+// Logger
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`, req.body);
+  console.log(`${req.method} ${req.url}`);
   next();
 });
 
@@ -44,10 +34,6 @@ app.get('/api/test', (req, res) => {
   res.status(200).json({ message: 'API is working!' });
 });
 
-app.post('/api/test', (req, res) => {
-  res.status(200).json({ message: 'POST API is working!', body: req.body });
-});
-
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
@@ -58,13 +44,13 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/passengers', passengerRoutes);
 
-// 404 handler for routes that don't exist
+// 404 handler
 app.use((req, res) => {
-  res.status(404).json({ error: `Route ${req.method} ${req.url} not found` });
+  res.status(404).json({ error: `Route not found` });
 });
 
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
