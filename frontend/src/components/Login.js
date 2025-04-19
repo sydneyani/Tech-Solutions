@@ -15,7 +15,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const API_URL = 'https://cors-anywhere.herokuapp.com/https://tech-solutions-production.up.railway.app';
+      const API_URL = process.env.REACT_APP_API_BASE_URL;
       const res = await axios.post(`${API_URL}/api/users/login`, form);
       setUser(res.data.user);
       navigate('/dashboard'); // 🔁 Redirect on successful login
