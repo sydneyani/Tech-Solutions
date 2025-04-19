@@ -3,7 +3,7 @@ const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
-const routeRoutes = require('./routes/routes'); 
+const routeRoutes = require('./routes/routes');
 const staffRoutes = require('./routes/staffRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
@@ -11,30 +11,19 @@ const passengerRoutes = require('./routes/passengerRoutes');
 
 const app = express();
 
-// ✅ Open CORS policy - allows any origin (for testing)
+// ✅ CORS for ALL origins (temporarily to test)
 app.use(cors());
 
-// ✅ JSON middleware
+// ✅ Allow JSON body parsing
 app.use(express.json());
 
-// ✅ Logger
+// ✅ Logger (dev only)
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
 
-// ✅ Optional DB setup flag
-if (process.env.SETUP_DB === 'true') {
-  console.log('Running database setup...');
-  require('./db-setup');
-}
-
-// ✅ Test route
-app.get('/api/test', (req, res) => {
-  res.status(200).json({ message: 'API is working!' });
-});
-
-// ✅ Main routes
+// ✅ Routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/schedules', scheduleRoutes);
@@ -52,5 +41,5 @@ app.use((req, res) => {
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Backend running on port ${PORT}`);
 });
