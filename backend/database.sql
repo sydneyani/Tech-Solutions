@@ -1,8 +1,3 @@
--- 6.3.4 : Creation of Database
-
-CREATE DATABASE RailroadDB;
-
-Use RailroadDB;
 
 
 
