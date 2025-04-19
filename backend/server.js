@@ -14,7 +14,7 @@ const app = express();
 // Define allowed origins
 const allowedOrigins = [
   'https://tech-solutions-production-e796.up.railway.app', // Frontend
-  'https://tech-solutions-production.up.railway.app'       // Backend
+  'https://tech-solutions-production.up.railway.app'        // Backend
 ];
 
 // CORS configuration
@@ -41,6 +41,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// **ADD THIS ROUTE HANDLER:**
+app.get('/', (req, res) => {
+  res.send('Backend API is running!'); // Or a more informative message
+});
+
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
@@ -57,7 +62,7 @@ app.use((req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`✅ Backend running on port ${PORT}`);
 });
