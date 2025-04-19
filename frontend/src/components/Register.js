@@ -31,7 +31,7 @@ const Register = () => {
     
     try {
       console.log('Sending registration data:', form);
-      const API_URL = 'https://cors-anywhere.herokuapp.com/https://tech-solutions-production.up.railway.app';
+      const API_URL = process.env.REACT_APP_API_BASE_URL;
       const registerRes = await axios.post(`${API_URL}/api/users/register`, form);
       console.log('Registration response:', registerRes.data);
 
