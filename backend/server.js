@@ -12,15 +12,17 @@ const passengerRoutes = require('./routes/passengerRoutes');
 const app = express();
 
 // CORS setup - simpler configuration
-const allowedOrigins = [
-  'https://tech-solutions-production-e796.up.railway.app', // your frontend
-];
+const cors = require('cors');
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    console.log("CORS request from:", origin);
+    callback(null, origin); // allow all origins dynamically
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true,
+  credentials: true
 }));
+
 
 
 // JSON middleware
