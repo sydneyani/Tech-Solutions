@@ -14,7 +14,8 @@ const app = express();
 
 
 const allowedOrigins = [
-  'https://tech-solutions-production-e796.up.railway.app'
+  'https://tech-solutions-production-e796.up.railway.app', // frontend
+  'https://tech-solutions-production.up.railway.app'       // backend
 ];
 
 app.use(cors({
@@ -28,6 +29,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
+
 
 
 
