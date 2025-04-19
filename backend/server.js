@@ -11,8 +11,7 @@ const passengerRoutes = require('./routes/passengerRoutes');
 
 const app = express();
 
-// CORS setup - simpler configuration
-const cors = require('cors');
+
 
 app.use(cors({
   origin: (origin, callback) => {
