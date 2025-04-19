@@ -11,25 +11,8 @@ const passengerRoutes = require('./routes/passengerRoutes');
 
 const app = express();
 
-// ✅ CORS Setup - Make sure this is FIRST before any route/middleware
-const allowedOrigins = [
-  'https://tech-solutions-production-e796.up.railway.app', // frontend
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS Not Allowed'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true
-}));
-
-// ✅ Ensure preflight requests are handled
-app.options('*', cors());
+// ✅ Open CORS policy - allows any origin (for testing)
+app.use(cors());
 
 // ✅ JSON middleware
 app.use(express.json());
@@ -69,5 +52,5 @@ app.use((req, res) => {
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
