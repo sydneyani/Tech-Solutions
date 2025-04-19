@@ -11,37 +11,20 @@ const passengerRoutes = require('./routes/passengerRoutes');
 
 const app = express();
 
-// Define allowed origins
-const allowedOrigins = [
-  'https://tech-solutions-production-e796.up.railway.app', // Frontend
-  'https://tech-solutions-production.up.railway.app'       // Backend
-];
+// ✅ CORS fix: Allow everything for now (we’ll lock it later)
+app.use(cors());
+app.options('*', cors()); // <== THIS handles preflight!
 
-// CORS configuration
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS Not Allowed'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-};
-
-app.use(cors(corsOptions));
-
-// Middleware
+// ✅ JSON parser
 app.use(express.json());
 
-// Logger
+// ✅ Logger
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
+  console.log(`[${req.method}] ${req.url}`);
   next();
 });
 
-// Routes
+// ✅ Routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/schedules', scheduleRoutes);
@@ -51,13 +34,13 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/passengers', passengerRoutes);
 
-// 404 handler
+// ✅ 404 fallback
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Start server
-const PORT = process.env.PORT || 5000;
+// ✅ Start server
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`✅ Backend running on port ${PORT}`);
 });
