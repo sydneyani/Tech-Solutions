@@ -9,6 +9,10 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const passengerRoutes = require('./routes/passengerRoutes');
 
+
+const fs = require('fs');
+const path = require('path');
+
 const app = express();
 
 // Middleware
@@ -25,6 +29,10 @@ app.use((req, res, next) => {
   next();
 });
 
+if (process.env.SETUP_DB === 'true') {
+  console.log('Running database setup...');
+  require('./db-setup');
+}
 // Test routes
 app.get('/api/test', (req, res) => {
   res.status(200).json({ message: 'API is working!' });
