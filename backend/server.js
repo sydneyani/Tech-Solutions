@@ -1,7 +1,4 @@
 const express = require('express');
-const cors = require('cors');
-
-// Route imports
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
@@ -13,11 +10,15 @@ const passengerRoutes = require('./routes/passengerRoutes');
 
 const app = express();
 
-// ✅ CORS setup (open for all origins — adjust later if needed)
-app.use(cors());
-app.options('*', cors()); // handles preflight requests
+// ✅ Manual CORS setup
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://tech-solutions-production-e796.up.railway.app");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
 
-// ✅ Middleware
+// ✅ Body parser
 app.use(express.json());
 
 // ✅ Logger
@@ -36,7 +37,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/passengers', passengerRoutes);
 
-// ✅ Simple test route
+// ✅ Test route
 app.get('/api/ping', (req, res) => {
   res.json({ message: 'pong' });
 });
