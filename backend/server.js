@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+
+// Route imports
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
@@ -11,13 +13,14 @@ const passengerRoutes = require('./routes/passengerRoutes');
 
 const app = express();
 
-// ✅ CORS for ALL origins (temporarily to test)
+// ✅ CORS setup (open for all origins — adjust later if needed)
 app.use(cors());
+app.options('*', cors()); // handles preflight requests
 
-// ✅ Allow JSON body parsing
+// ✅ Middleware
 app.use(express.json());
 
-// ✅ Logger (dev only)
+// ✅ Logger
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
@@ -33,9 +36,14 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/passengers', passengerRoutes);
 
-// ✅ 404 fallback
+// ✅ Simple test route
+app.get('/api/ping', (req, res) => {
+  res.json({ message: 'pong' });
+});
+
+// ✅ 404 handler
 app.use((req, res) => {
-  res.status(404).json({ error: `Route not found` });
+  res.status(404).json({ error: 'Route not found' });
 });
 
 // ✅ Start server
