@@ -3,12 +3,13 @@ import axios from 'axios';
 import './Payments.css';
 
 const Payments = ({ 
-  seat, 
+  seats, // Changed from seat to seats (array)
   schedule,
   user, 
   onSuccess, 
   onCancel,
-  selectedSchedule
+  selectedSchedule,
+  totalFare // Optional: can be calculated internally if not provided
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -31,14 +32,27 @@ const Payments = ({
     return seatNumber.startsWith('S') ? 'SL' : 'AC';
   };
 
-  // Calculate fare based on seat class and user role
+  // Calculate fare based on all selected seats and user role
   const calculateFare = () => {
-    const seatClass = getSeatClass(seat?.seat_number);
-    const baseFare = baseFares[seatClass] || baseFares['AC']; // Default to AC if class not found
+    // If totalFare is provided directly, use it
+    if (totalFare) return totalFare;
+    
+    // Otherwise calculate based on seats
+    if (!seats || !seats.length) return 0;
+    
+    // For backward compatibility - handle both single seat and array of seats
+    const seatsArray = Array.isArray(seats) ? seats : [seats];
+    
+    let totalAmount = 0;
+    seatsArray.forEach(seat => {
+      const seatClass = getSeatClass(seat?.seat_number);
+      const baseFare = baseFares[seatClass] || baseFares['AC'];
+      totalAmount += baseFare;
+    });
     
     // Apply 50% discount for staff members
     const discountFactor = user?.role === 'Staff' ? 0.5 : 1;
-    return baseFare * discountFactor;
+    return totalAmount * discountFactor;
   };
 
   const fareAmount = calculateFare();
@@ -81,7 +95,7 @@ const Payments = ({
     setCvv(value);
   };
 
-  // Simplified payment processing - only sending necessary fields
+  // Simplified payment processing for multiple seats
   const processPayment = async () => {
     // Form validation
     if ((paymentMethod === 'credit' || paymentMethod === 'debit') && 
@@ -95,10 +109,16 @@ const Payments = ({
     setSuccessMessage(null);
     
     try {
-      // Simplified payload - only sending what the database expects
+      // Ensure seats is always an array
+      const seatsArray = Array.isArray(seats) ? seats : [seats];
+      
+      // Get all seat IDs
+      const seatIds = seatsArray.map(seat => seat.seat_id);
+      
+      // Simplified payload for multiple seats
       const paymentData = {
         user_id: user.user_id,
-        seat_id: seat.seat_id,
+        seat_ids: seatIds, // Array of seat IDs
         schedule_id: selectedSchedule,
         amount: fareAmount,
         payment_method: paymentMethod
@@ -119,8 +139,15 @@ const Payments = ({
         
         console.log('Ticket response:', ticketResponse.data);
         
+        // Add seat numbers to ticket data for display
+        const ticketWithSeats = {
+          ...ticketResponse.data,
+          seat_numbers: seatsArray.map(seat => seat.seat_number).join(', '),
+          total_fare: fareAmount
+        };
+        
         setLoading(false);
-        onSuccess(ticketResponse.data);
+        onSuccess(ticketWithSeats);
       } else {
         throw new Error('Payment failed');
       }
@@ -129,7 +156,7 @@ const Payments = ({
       
       // Check for seat already booked error
       if (err.response?.data?.seatAlreadyBooked) {
-        setError('This seat has already been booked. Please select another seat.');
+        setError('One or more seats have already been booked. Please select different seats.');
       } else {
         setError(err.response?.data?.error || 'Payment processing failed. Please try again.');
       }
@@ -137,6 +164,9 @@ const Payments = ({
       setLoading(false);
     }
   };
+
+  // Ensure seats is always an array for rendering
+  const seatsArray = Array.isArray(seats) ? seats : [seats];
 
   return (
     <div className="payment-container">
@@ -162,8 +192,8 @@ const Payments = ({
               <span>{schedule?.departure_time} to {schedule?.arrival_time}</span>
             </div>
             <div className="summary-row">
-              <span>Seat:</span>
-              <span>{seat?.seat_number}</span>
+              <span>Seats:</span>
+              <span>{seatsArray.map(seat => seat.seat_number).join(', ')}</span>
             </div>
             <div className="summary-row fare">
               <span>Fare:</span>
