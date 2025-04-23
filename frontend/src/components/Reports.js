@@ -71,19 +71,17 @@ const Reports = () => {
                 <td>₹{item.total_sales || 0}</td>
               </tr>
             ))}
-  
-                  // Fix for the Grand Total calculation in the renderSalesReport function
+          </tbody>
           <tfoot>
             <tr>
               <td colSpan="3"><strong>Grand Total</strong></td>
               <td>
                 <strong>
                   ₹{salesData.reduce((total, item) => total + (parseFloat(item.total_sales) || 0), 0).toFixed(2)}
-              </strong>
-            </td>
-          </tr>
-        </tfoot>
-                
+                </strong>
+              </td>
+            </tr>
+          </tfoot>
         </table>
       ) : (
         <p>No sales data available.</p>
