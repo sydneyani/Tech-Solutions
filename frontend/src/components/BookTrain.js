@@ -9,13 +9,14 @@ const BookTrain = () => {
   const [schedules, setSchedules] = useState([]);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [selectedScheduleData, setSelectedScheduleData] = useState(null);
-  const [selectedSeat, setSelectedSeat] = useState(null);
+  const [selectedSeats, setSelectedSeats] = useState([]);
   const [seats, setSeats] = useState([]);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [ticket, setTicket] = useState(null);
+  const [totalFare, setTotalFare] = useState(0);
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -90,6 +91,7 @@ const BookTrain = () => {
       setSelectedSchedule(schedule.schedule_id);
       setSelectedScheduleData(schedule);
       setSeats(res.data);
+      setSelectedSeats([]); // Reset selected seats when opening modal
       setShowSeatModal(true);
       setLoading(false);
     } catch (err) {
@@ -100,8 +102,30 @@ const BookTrain = () => {
   };
 
   const handleSeatClick = (seat) => {
-    // Instead of immediately booking, store the selected seat and show payment modal
-    setSelectedSeat(seat);
+    // Check if seat is already selected
+    if (selectedSeats.some(s => s.seat_id === seat.seat_id)) {
+      // Remove seat from selection
+      setSelectedSeats(selectedSeats.filter(s => s.seat_id !== seat.seat_id));
+    } else {
+      // Add seat to selection
+      setSelectedSeats([...selectedSeats, seat]);
+    }
+    
+    // Calculate total fare (assuming each seat costs ₹1500)
+    const seatPrice = 1500;
+    setTotalFare((selectedSeats.length + 1) * seatPrice);
+  };
+
+  const handleProceedToPayment = () => {
+    if (selectedSeats.length === 0) {
+      setError('Please select at least one seat');
+      return;
+    }
+    
+    // Calculate final fare
+    const seatPrice = 1500;
+    setTotalFare(selectedSeats.length * seatPrice);
+    
     setShowPaymentModal(true);
   };
 
@@ -115,13 +139,12 @@ const BookTrain = () => {
 
   const handlePaymentCancel = () => {
     setShowPaymentModal(false);
-    setSelectedSeat(null);
   };
 
   const handleBookingComplete = () => {
     // Reset states and navigate user back
     setTicket(null);
-    setSelectedSeat(null);
+    setSelectedSeats([]);
     setSelectedSchedule(null);
     setSelectedScheduleData(null);
     
@@ -201,7 +224,7 @@ const BookTrain = () => {
       {showSeatModal && (
         <div className="seat-modal">
           <div className="modal-content">
-            <h3>Select a Seat</h3>
+            <h3>Select Seats</h3>
             {loading ? (
               <p>Loading seats...</p>
             ) : (
@@ -210,12 +233,22 @@ const BookTrain = () => {
                   <p><strong>{selectedScheduleData?.train_name}</strong></p>
                   <p>{formatDate(selectedScheduleData?.travel_date)} • {formatTime(selectedScheduleData?.departure_time)} to {formatTime(selectedScheduleData?.arrival_time)}</p>
                 </div>
+                
+                <div className="selected-seats-summary">
+                  <p>Selected Seats: {selectedSeats.length > 0 ? 
+                    selectedSeats.map(seat => seat.seat_number).join(', ') : 
+                    'None'}</p>
+                  <p>Total Fare: ₹{selectedSeats.length * 1500}</p>
+                </div>
+                
                 <div className="train-outline">
                   <div className="seats-grid">
                     {seats.map(seat => (
                       <button
                         key={seat.seat_id}
-                        className={`seat-btn ${seat.is_booked ? 'taken' : ''}`}
+                        className={`seat-btn 
+                          ${seat.is_booked ? 'taken' : ''} 
+                          ${selectedSeats.some(s => s.seat_id === seat.seat_id) ? 'selected' : ''}`}
                         onClick={() => !seat.is_booked && handleSeatClick(seat)}
                         disabled={seat.is_booked}
                       >
@@ -224,19 +257,34 @@ const BookTrain = () => {
                     ))}
                   </div>
                 </div>
+                
                 <div className="seat-legend">
                   <div className="legend-item">
                     <div className="legend-color available"></div>
                     <span>Available</span>
                   </div>
                   <div className="legend-item">
+                    <div className="legend-color selected"></div>
+                    <span>Selected</span>
+                  </div>
+                  <div className="legend-item">
                     <div className="legend-color taken"></div>
                     <span>Booked</span>
                   </div>
                 </div>
+                
+                <div className="modal-actions">
+                  <button 
+                    className="proceed-btn" 
+                    onClick={handleProceedToPayment}
+                    disabled={selectedSeats.length === 0}
+                  >
+                    Proceed to Payment
+                  </button>
+                  <button className="close-btn" onClick={() => setShowSeatModal(false)}>Cancel</button>
+                </div>
               </>
             )}
-            <button className="close-btn" onClick={() => setShowSeatModal(false)}>Close</button>
           </div>
         </div>
       )}
@@ -244,10 +292,11 @@ const BookTrain = () => {
       {/* Payment Modal */}
       {showPaymentModal && (
         <Payments
-          seat={selectedSeat}
+          seats={selectedSeats}
           schedule={selectedScheduleData}
           user={user}
           selectedSchedule={selectedSchedule}
+          totalFare={totalFare}
           onSuccess={handlePaymentSuccess}
           onCancel={handlePaymentCancel}
         />
@@ -263,9 +312,10 @@ const BookTrain = () => {
               <p><strong>Train:</strong> {ticket.train_name || selectedScheduleData?.train_name}</p>
               <p><strong>Date:</strong> {formatDate(ticket.travel_date || selectedScheduleData?.travel_date)}</p>
               <p><strong>Time:</strong> {formatTime(ticket.departure_time || selectedScheduleData?.departure_time)} to {formatTime(ticket.arrival_time || selectedScheduleData?.arrival_time)}</p>
-              <p><strong>Seat:</strong> {ticket.seat_number || selectedSeat?.seat_number}</p>
+              <p><strong>Seats:</strong> {ticket.seat_numbers || selectedSeats.map(seat => seat.seat_number).join(', ')}</p>
               <p><strong>Passenger:</strong> {ticket.passenger_name || `${user?.first_name} ${user?.last_name}`}</p>
               <p><strong>Issued:</strong> {formatIssuedDate(ticket.issued_date)}</p>
+              <p><strong>Total Fare:</strong> ₹{ticket.total_fare || totalFare}</p>
             </div>
             <div className="ticket-actions">
               <button onClick={handleBookingComplete}>Done</button>
