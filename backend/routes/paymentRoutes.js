@@ -2,11 +2,25 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Process payment and create payment record
+// Process payment and create payment record for multiple seats
 router.post('/process', (req, res) => {
-  const { user_id, seat_id, schedule_id, amount, payment_method } = req.body;
+  const { user_id, seat_ids, schedule_id, amount, payment_method } = req.body;
   
-  console.log('Payment request received:', { user_id, seat_id, schedule_id, amount, payment_method });
+  // Validate input
+  if (!Array.isArray(seat_ids) || seat_ids.length === 0) {
+    return res.status(400).json({ error: 'No seats selected' });
+  }
+  
+  console.log('Payment request received:', { 
+    user_id, 
+    seat_ids: Array.isArray(seat_ids) ? seat_ids : [seat_ids], 
+    schedule_id, 
+    amount, 
+    payment_method 
+  });
+  
+  // Ensure seat_ids is always an array (for backward compatibility)
+  const seatsToBook = Array.isArray(seat_ids) ? seat_ids : [seat_ids];
   
   // Start transaction
   db.beginTransaction(err => {
@@ -15,30 +29,35 @@ router.post('/process', (req, res) => {
       return res.status(500).json({ error: 'Database error' });
     }
     
-    // First check if the specific seat is already booked
-    const checkSeatQuery = `
-      SELECT bd.booking_id, seats.is_booked 
+    // First check if any of the selected seats are already booked
+    const seatPlaceholders = seatsToBook.map(() => '?').join(',');
+    const checkSeatsQuery = `
+      SELECT seat_id, is_booked 
       FROM seats
-      LEFT JOIN booking_details bd ON seats.seat_id = bd.seat_id
-      WHERE seats.seat_id = ?
+      WHERE seat_id IN (${seatPlaceholders})
     `;
     
-    db.query(checkSeatQuery, [seat_id], (err, seatResults) => {
+    db.query(checkSeatsQuery, seatsToBook, (err, seatResults) => {
       if (err) {
         return db.rollback(() => {
-          console.error('Error checking seat:', err);
+          console.error('Error checking seats:', err);
           res.status(500).json({ error: 'Database error' });
         });
       }
       
-      // Check if the seat is already booked
-      if (seatResults.length > 0 && seatResults[0].booking_id) {
+      // Check if any seat is already booked
+      const bookedSeats = seatResults.filter(seat => seat.is_booked);
+      if (bookedSeats.length > 0) {
         return db.rollback(() => {
-          res.status(400).json({ error: 'This seat is already booked', seatAlreadyBooked: true });
+          res.status(400).json({ 
+            error: 'One or more seats are already booked', 
+            seatAlreadyBooked: true,
+            bookedSeatIds: bookedSeats.map(seat => seat.seat_id)
+          });
         });
       }
       
-      // Create a new booking - always create a new booking for each seat
+      // Create a single booking for all seats
       const createBookingQuery = `
         INSERT INTO bookings (user_id, schedule_id, booking_date)
         VALUES (?, ?, NOW())
@@ -72,38 +91,51 @@ router.post('/process', (req, res) => {
           const passenger_name = user.last_name 
             ? `${user.first_name} ${user.last_name}`
             : user.first_name;
-            
-          // Create booking detail
-          const createDetailQuery = `
-            INSERT INTO booking_details (booking_id, passenger_name, age, gender, seat_id)
-            VALUES (?, ?, ?, ?, ?)
-          `;
           
           const age = user.age || 30;
           const gender = user.gender || 'Not specified';
           
-          db.query(createDetailQuery, [booking_id, passenger_name, age, gender, seat_id], (err) => {
-            if (err) {
-              return db.rollback(() => {
-                console.error('Error creating booking detail:', err);
-                res.status(500).json({ error: 'Failed to create booking detail' });
-              });
-            }
-            
-            // Mark seat as booked
-            const updateSeatQuery = `
-              UPDATE seats SET is_booked = TRUE WHERE seat_id = ?
+          // Create booking details for each seat
+          let processedSeats = 0;
+          let bookingDetailsError = false;
+          
+          seatsToBook.forEach(seat_id => {
+            // Create booking detail for this seat
+            const createDetailQuery = `
+              INSERT INTO booking_details (booking_id, passenger_name, age, gender, seat_id)
+              VALUES (?, ?, ?, ?, ?)
             `;
             
-            db.query(updateSeatQuery, [seat_id], (err) => {
+            db.query(createDetailQuery, [booking_id, passenger_name, age, gender, seat_id], (err) => {
               if (err) {
-                return db.rollback(() => {
-                  console.error('Error updating seat:', err);
-                  res.status(500).json({ error: 'Failed to update seat' });
-                });
+                bookingDetailsError = true;
+                console.error('Error creating booking detail:', err);
+                return;
               }
               
-              createPayment(booking_id);
+              // Mark seat as booked
+              const updateSeatQuery = `
+                UPDATE seats SET is_booked = TRUE WHERE seat_id = ?
+              `;
+              
+              db.query(updateSeatQuery, [seat_id], (err) => {
+                if (err) {
+                  bookingDetailsError = true;
+                  console.error('Error updating seat:', err);
+                  return;
+                }
+                
+                processedSeats++;
+                
+                // After all seats are processed, create payment
+                if (processedSeats === seatsToBook.length && !bookingDetailsError) {
+                  createPayment(booking_id);
+                } else if (processedSeats === seatsToBook.length && bookingDetailsError) {
+                  db.rollback(() => {
+                    res.status(500).json({ error: 'Failed to create booking details or update seats' });
+                  });
+                }
+              });
             });
           });
         });
@@ -123,7 +155,7 @@ router.post('/process', (req, res) => {
             });
           }
       
-          // ✅ Only update payment_status in bookings table
+          // Update payment_status in bookings table
           const updateBookingStatusQuery = `
             UPDATE bookings
             SET payment_status = ?
@@ -138,7 +170,7 @@ router.post('/process', (req, res) => {
               });
             }
       
-            // ✅ Commit once after everything succeeds
+            // Commit transaction
             db.commit(err => {
               if (err) {
                 return db.rollback(() => {
@@ -147,7 +179,7 @@ router.post('/process', (req, res) => {
                 });
               }
       
-              // ✅ Only send the response here
+              // Send success response
               return res.status(200).json({
                 success: true,
                 message: 'Payment successful',
@@ -157,7 +189,6 @@ router.post('/process', (req, res) => {
           });
         });
       }
-      
     });
   });
 });
