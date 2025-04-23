@@ -28,11 +28,12 @@ const Dashboard = () => {
             <Link to="/travel-history" className="dash-btn">📜 Travel History</Link>
           )}
           
-          {/* Admin-specific button */}
+          {/* Admin-specific buttons */}
           {user.role === 'Admin' && (
             <>
               <Link to="/admin" className="dash-btn">⚙️ Admin Panel</Link>
               <Link to="/reports" className="dash-btn">📊 Report Generation</Link>
+              <Link to="/register" className="dash-btn">👤 Register New Users</Link>
             </>
           )}
           
