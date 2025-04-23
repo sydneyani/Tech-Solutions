@@ -12,6 +12,8 @@ import BookTrain from './components/BookTrain';
 import ViewSchedule from './components/ViewSchedule';
 import ManageRides from './components/ManageRides';
 import TravelHistory from './components/TravelHistory'; // ✅ Import TravelHistory component
+import Reports from './components/Reports'; // Add this line
+
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 
@@ -30,6 +32,8 @@ function App() {
           <Route path="/view-schedule" element={<ViewSchedule />} />
           <Route path="/manage-rides" element={<ManageRides />} />
           <Route path="/travel-history" element={<TravelHistory />} /> {/* ✅ Add TravelHistory route */}
+          <Route path="/reports" element={<Reports />} /> {/* Add this line */}
+
 
           <Route path="*" element={<NotFound />} />
         </Routes>
