@@ -85,3 +85,25 @@
     border-color: #3498db;
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
   }
+
+
+.role-select {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  width: 100%;
+  background-color: #f8f9fa;
+  border-left: 4px solid #007bff;
+}
+
+.success-message {
+  background-color: #eafaea;
+  color: #28a745;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  border-left: 4px solid #28a745;
+  font-size: 0.9rem;
+}
