@@ -33,12 +33,28 @@ const Register = () => {
   }, [user]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // For mobile field, only allow numbers and limit to 10 digits
+    if (name === 'mobile') {
+      const mobileRegex = /^[0-9]*$/;
+      if (mobileRegex.test(value) && value.length <= 10) {
+        setForm({ ...form, [name]: value });
+      }
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    
+    // Validate mobile number length
+    if (form.mobile && form.mobile.length !== 10) {
+      setError('Mobile number must be exactly 10 digits');
+      return;
+    }
     
     try {
       console.log('Sending registration data:', form);
@@ -167,9 +183,11 @@ const Register = () => {
 
         <input 
           name="mobile" 
-          placeholder="Mobile Number" 
+          placeholder="Mobile Number (10 digits)" 
           value={form.mobile}
-          onChange={handleChange} 
+          onChange={handleChange}
+          pattern="[0-9]{10}"
+          title="Mobile number must be exactly 10 digits"
         />
 
         {/* Role selector - only visible to admin users */}
