@@ -190,7 +190,84 @@ router.put('/edit-schedule/:schedule_id', (req, res) => {
     });
   });
 
-  // Add this to your admin routes.js file
+
+
+// Generate reports for ticket sales, demographics, and train occupancy
+router.get('/reports/sales', (req, res) => {
+  const query = `
+    SELECT 
+      s.schedule_id,
+      t.name AS train_name,
+      t.train_number,
+      s.travel_date,
+      COUNT(p.payment_id) AS ticket_count,
+      SUM(p.amount) AS total_sales
+    FROM schedules s
+    JOIN trains t ON s.train_id = t.train_id
+    LEFT JOIN bookings b ON s.schedule_id = b.schedule_id
+    LEFT JOIN payments p ON b.booking_id = p.booking_id
+    WHERE p.status = 'Paid'
+    GROUP BY s.schedule_id, t.name, t.train_number, s.travel_date
+    ORDER BY s.travel_date DESC
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error generating sales report:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.status(200).json(results);
+  });
+});
+
+// Gender demographics report
+router.get('/reports/demographics', (req, res) => {
+  const query = `
+    SELECT 
+      bd.gender,
+      COUNT(*) AS passenger_count,
+      ROUND((COUNT(*) / (SELECT COUNT(*) FROM booking_details)) * 100, 2) AS percentage
+    FROM booking_details bd
+    GROUP BY bd.gender
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error generating demographics report:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.status(200).json(results);
+  });
+});
+
+// Train occupancy report
+router.get('/reports/occupancy', (req, res) => {
+  const query = `
+    SELECT 
+      s.schedule_id,
+      t.name AS train_name,
+      t.train_number,
+      s.travel_date,
+      COUNT(CASE WHEN se.is_booked = 1 THEN 1 END) AS booked_seats,
+      COUNT(se.seat_id) AS total_seats,
+      ROUND((COUNT(CASE WHEN se.is_booked = 1 THEN 1 END) / COUNT(se.seat_id)) * 100, 2) AS occupancy_rate
+    FROM schedules s
+    JOIN trains t ON s.train_id = t.train_id
+    JOIN seats se ON s.schedule_id = se.schedule_id
+    GROUP BY s.schedule_id, t.name, t.train_number, s.travel_date
+    ORDER BY s.travel_date DESC
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error generating occupancy report:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.status(200).json(results);
+  });
+});
+
+
 
 // Remove a passenger by schedule_id and seat_number with full booking cleanup
 router.delete('/remove-passenger/schedule/:schedule_id/seat/:seat_number', (req, res) => {
