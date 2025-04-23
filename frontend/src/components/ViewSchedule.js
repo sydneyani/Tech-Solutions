@@ -4,15 +4,29 @@ import './ViewSchedule.css';
 
 const ViewSchedule = () => {
   const [schedules, setSchedules] = useState([]);
+  const [filteredSchedules, setFilteredSchedules] = useState([]);
+  const [filterValue, setFilterValue] = useState('');
 
   const fetchSchedules = async () => {
     const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/schedules`);
     setSchedules(res.data);
+    setFilteredSchedules(res.data);
   };
 
   useEffect(() => {
     fetchSchedules();
   }, []);
+
+  useEffect(() => {
+    if (filterValue.trim() === '') {
+      setFilteredSchedules(schedules);
+    } else {
+      const filtered = schedules.filter(schedule => 
+        schedule.train_name.toLowerCase().includes(filterValue.toLowerCase())
+      );
+      setFilteredSchedules(filtered);
+    }
+  }, [filterValue, schedules]);
 
   const formatTime = (timeStr) => {
     const date = new Date(`1970-01-01T${timeStr}Z`);
@@ -29,19 +43,42 @@ const ViewSchedule = () => {
     });
   };
 
+  const handleFilterChange = (e) => {
+    setFilterValue(e.target.value);
+  };
+
   return (
     <div className="viewschedule-container">
       <h2>🚆 Train Schedules</h2>
-
-      <button onClick={fetchSchedules} style={{ marginBottom: '1rem' }}>
-        🔄 Refresh Schedules
-      </button>
-
-      {schedules.length === 0 ? (
+      <div className="schedule-controls">
+        <button onClick={fetchSchedules} className="refresh-button">
+          🔄 Refresh Schedules
+        </button>
+        <div className="filter-container">
+          <input
+            type="text"
+            placeholder="Filter by train name..."
+            value={filterValue}
+            onChange={handleFilterChange}
+            className="filter-input"
+          />
+          {filterValue && (
+            <button 
+              className="clear-filter" 
+              onClick={() => setFilterValue('')}
+              title="Clear filter"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+      
+      {filteredSchedules.length === 0 ? (
         <p>No schedules found</p>
       ) : (
         <ul>
-          {schedules.map((s) => (
+          {filteredSchedules.map((s) => (
             <li key={s.schedule_id}>
               <div className="train-name">{s.train_name}</div>
               <div className="schedule-date">📅 {formatDate(s.travel_date)}</div>
