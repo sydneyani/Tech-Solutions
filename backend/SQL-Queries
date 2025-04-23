@@ -2,7 +2,7 @@
 --  6.35 : Validation of Database
 
 
---  Sample Questions
+
 ## 1 All train schedules for a specific route:
 
 SELECT 
@@ -25,7 +25,9 @@ JOIN
     schedules s ON t.train_id = s.train_id
 WHERE 
     r.route_id = 3;
-    
+
+
+
 
 ## 2 Next available train departure time for a specific station:
 
@@ -40,25 +42,32 @@ SELECT
 FROM routes r
 JOIN trains t ON r.route_id = t.route_id
 JOIN schedules s ON t.train_id = s.train_id
-WHERE r.name = 'Delhi to Mumbai Express'
-ORDER BY s.travel_date;
+WHERE r.name = 'Chennai to Hyderabad Line'
+AND s.travel_date >= CURDATE()
+ORDER BY s.travel_date, s.departure_time;
 
-## change date ^
+
 
 
 ## 3 All available seats for a specific train on a given date:
 
 SELECT
+    t.train_id,
+    t.name AS train_name,
     s.seat_number
 FROM
     seats s
 JOIN
     schedules sch ON s.schedule_id = sch.schedule_id
+JOIN
+    trains t ON sch.train_id = t.train_id
 WHERE
-    sch.train_id = 4
-    AND s.is_booked = 0;
+    sch.train_id = 3
+    AND sch.travel_date = '2025-04-05'
+    AND s.is_booked = 0
+ORDER BY
+    s.seat_number;
 
-## specific date ^^
 
 
 ## 4 Total number of passengers booked for a specific train:
