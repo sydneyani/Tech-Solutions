@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -14,12 +14,23 @@ const Register = () => {
     gender: '',
     dob: '',
     mobile: '',
-    role: 'Passenger' // Always set the default role to Passenger
+    role: 'Passenger' // Default role
   });
 
-  const { setUser } = useAuth();
+  const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if current user is admin
+  useEffect(() => {
+    if (user && user.role === 'Admin') {
+      setIsAdmin(true);
+    } else {
+      // Lock role to Passenger for non-admin users
+      setForm(prev => ({ ...prev, role: 'Passenger' }));
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -35,7 +46,27 @@ const Register = () => {
       const registerRes = await axios.post(`${API_URL}/api/users/register`, form);
       console.log('Registration response:', registerRes.data);
 
-      // If the registration includes the user object, use it directly
+      // If admin is creating another user, just show success and don't log in as that user
+      if (isAdmin) {
+        setError(`Successfully registered new ${form.role} user: ${form.username}`);
+        
+        // Clear form for next registration
+        setForm({
+          first_name: '',
+          last_name: '',
+          username: '',
+          email: '',
+          password: '',
+          gender: '',
+          dob: '',
+          mobile: '',
+          role: 'Passenger'
+        });
+        
+        return;
+      }
+
+      // For non-admin registrations, continue with normal flow
       if (registerRes.data.user) {
         setUser(registerRes.data.user);
         navigate('/dashboard');
@@ -60,9 +91,11 @@ const Register = () => {
   return (
     <div className="register-container">
       <form className="register-form" onSubmit={handleSubmit}>
-        <h2>Create an Account</h2>
+        <h2>{isAdmin ? 'Create New User' : 'Create an Account'}</h2>
         
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className={error.includes('Successfully') ? "success-message" : "error-message"}>
+          {error}
+        </div>}
         
         <div className="input-group">
           <input 
@@ -139,9 +172,24 @@ const Register = () => {
           onChange={handleChange} 
         />
 
-        {/* The role is hard-coded to 'Passenger' in the form state */}
+        {/* Role selector - only visible to admin users */}
+        {isAdmin && (
+          <select
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+            className="role-select"
+            required
+          >
+            <option value="Passenger">Passenger</option>
+            <option value="Staff">Staff</option>
+            <option value="Admin">Admin</option>
+          </select>
+        )}
         
-        <button type="submit" className="register-btn">Register</button>
+        <button type="submit" className="register-btn">
+          {isAdmin ? 'Create User' : 'Register'}
+        </button>
       </form>
     </div>
   );
