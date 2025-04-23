@@ -1,0 +1,75 @@
+
+--  6.35 : Validation of Database
+
+
+--  Sample Questions
+## 1 All train schedules for a specific route:
+
+SELECT 
+
+    r.route_id,
+    r.name AS route_name,
+    t.train_id,
+    t.train_number,
+    t.name AS train_name,
+    s.schedule_id,
+    s.travel_date,
+    s.departure_time,
+    s.arrival_time
+FROM 
+    routes r
+
+JOIN 
+    trains t ON r.route_id = t.route_id
+JOIN 
+    schedules s ON t.train_id = s.train_id
+WHERE 
+    r.route_id = 3;
+    
+
+## 2 Next available train departure time for a specific station:
+
+
+SELECT 
+  r.name AS route_name,
+  t.name AS train_name,
+  s.schedule_id,
+  s.travel_date,
+  s.departure_time,
+  s.arrival_time
+FROM routes r
+JOIN trains t ON r.route_id = t.route_id
+JOIN schedules s ON t.train_id = s.train_id
+WHERE r.name = 'Delhi to Mumbai Express'
+ORDER BY s.travel_date;
+
+## change date ^
+
+
+## 3 All available seats for a specific train on a given date:
+
+SELECT
+    s.seat_number
+FROM
+    seats s
+JOIN
+    schedules sch ON s.schedule_id = sch.schedule_id
+WHERE
+    sch.train_id = 4
+    AND s.is_booked = 0;
+
+## specific date ^^
+
+
+## 4 Total number of passengers booked for a specific train:
+
+SELECT
+    COUNT(bd.booking_id) AS total_passengers
+FROM
+    schedules sch
+JOIN
+    bookings b ON sch.schedule_id = b.schedule_id
+JOIN
+    booking_details bd ON b.booking_id = bd.booking_id
+WHERE
+    sch.train_id = 4; -- Specify the train ID here
