@@ -3,6 +3,10 @@
 ## Project Overview
 Welcome to Tech Solutions' Railway Management System, created by a team of 8 members working together to build a comprehensive railway management solution.
 
+## Leader of UI Development
+- Sydney Ani
+
+  
 ## Team Members
 - Alessandra Alvarado-Escobar
 - Sydney Ani
@@ -62,11 +66,7 @@ Once on the site, register for an account and login.
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-### Available Scripts
 
-In the project directory, you can run:
-
-#### `npm start`
 Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
