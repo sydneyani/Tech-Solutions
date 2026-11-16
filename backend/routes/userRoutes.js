@@ -97,6 +97,7 @@ router.post('/login', (req, res) => {
     }
 
     const user = results[0];
+    delete user.password;
     res.status(200).json({ user });
   });
 });
@@ -108,7 +109,6 @@ router.get('/booking/:booking_id', (req, res) => {
   const query = `
     SELECT 
       t.ticket_id, 
-      t.ticket_number, 
       t.issued_date,
       b.booking_id,
       s.travel_date,

@@ -1,5 +1,10 @@
-
-
+-- Railroad schema and seed data for the railway management system.
+-- Create an empty database first, then run this file against it:
+--   CREATE DATABASE RailroadDB;
+--   mysql -u root -p RailroadDB < database.sql
+--
+-- The seed schedules use travel dates in April 2025. The schedule API
+-- returns those rows regardless of the current date.
 
 -- 1. USERS
 CREATE TABLE users (
@@ -89,7 +94,6 @@ CREATE TABLE bookings (
   FOREIGN KEY (schedule_id) REFERENCES schedules(schedule_id)
 );
 
-select * from bookings;
 -- 10. BOOKING_DETAILS
 CREATE TABLE booking_details (
   booking_detail_id INT AUTO_INCREMENT PRIMARY KEY,

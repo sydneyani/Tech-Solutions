@@ -1,8 +1,12 @@
 import { render, screen } from '@testing-library/react';
-import App from './App';
+import { MemoryRouter } from 'react-router-dom';
+import Home from './pages/Home';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('renders the railway management heading', () => {
+  render(
+    <MemoryRouter>
+      <Home />
+    </MemoryRouter>
+  );
+  expect(screen.getByRole('heading', { name: /railway management system/i })).toBeInTheDocument();
 });

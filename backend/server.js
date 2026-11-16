@@ -1,3 +1,6 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
 const express = require('express');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
@@ -11,10 +14,17 @@ const passengerRoutes = require('./routes/passengerRoutes');
 
 const app = express();
 
-// Define allowed origins
+// Local Create React App, plus the origins recorded for the earlier Railway deploy.
+// CORS_ORIGINS adds more, comma-separated, without removing these.
 const allowedOrigins = [
-  'https://tech-solutions-production-e796.up.railway.app', // Frontend
-  'https://tech-solutions-production.up.railway.app'        // Backend
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://tech-solutions-production-e796.up.railway.app',
+  'https://tech-solutions-production.up.railway.app',
+  ...(process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
 ];
 
 // CORS configuration

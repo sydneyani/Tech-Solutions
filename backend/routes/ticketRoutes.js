@@ -96,7 +96,6 @@ router.get('/:ticket_id', (req, res) => {
   const query = `
     SELECT 
       t.ticket_id, 
-      t.ticket_number, 
       t.issued_date,
       b.booking_id,
       s.travel_date,

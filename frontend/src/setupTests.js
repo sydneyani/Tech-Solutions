@@ -2,4 +2,14 @@
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
+import { TextDecoder, TextEncoder } from 'util';
 import '@testing-library/jest-dom';
+
+// React Router 7 expects the Web TextEncoder API. The Jest environment
+// shipped with Create React App does not provide it.
+if (typeof global.TextEncoder === 'undefined') {
+  global.TextEncoder = TextEncoder;
+}
+if (typeof global.TextDecoder === 'undefined') {
+  global.TextDecoder = TextDecoder;
+}
