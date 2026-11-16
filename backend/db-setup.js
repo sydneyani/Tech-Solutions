@@ -1,41 +1,61 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
 const mysql = require('mysql2');
 const fs = require('fs');
-const path = require('path');
 
-// Use the exact connection string from Railway
-const connectionString = 'mysql://root:PjnewpNEsVkXpbaDLdIwSeNRxQSnfSzZ@trolley.proxy.rlwy.net:21387/railway';
-const connection = mysql.createConnection({
-  uri: connectionString,
-  multipleStatements: true // This is crucial to run multiple SQL statements at once
-});
+function connectionOptions() {
+  const databaseUrl = process.env.DATABASE_URL || process.env.MYSQL_URL;
 
-// Read your SQL script - save your SQL in a file named 'database.sql'
+  if (databaseUrl) {
+    return {
+      uri: databaseUrl,
+      multipleStatements: true,
+    };
+  }
+
+  const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME } = process.env;
+
+  if (!DB_HOST || !DB_USER || !DB_NAME) {
+    console.error(
+      'Database configuration is missing. Copy backend/.env.example to backend/.env and set DB_HOST, DB_USER, DB_PASSWORD, and DB_NAME.'
+    );
+    process.exit(1);
+  }
+
+  return {
+    host: DB_HOST,
+    port: DB_PORT ? Number(DB_PORT) : 3306,
+    user: DB_USER,
+    password: DB_PASSWORD || '',
+    database: DB_NAME,
+    multipleStatements: true,
+  };
+}
+
+const connection = mysql.createConnection(connectionOptions());
 const sqlScript = fs.readFileSync(path.join(__dirname, 'database.sql'), 'utf8');
 
-// Connect to the database
 connection.connect((err) => {
   if (err) {
-    console.error('Error connecting to database:', err);
+    console.error('Error connecting to database:', err.message);
     return;
   }
-  
+
   console.log('Connected to database. Running setup script...');
-  
-  // Execute the entire SQL script at once
-  connection.query(sqlScript, (err, results) => {
-    if (err) {
-      console.error('Error executing SQL script:', err);
-      console.error(err.message);
+
+  connection.query(sqlScript, (queryErr, results) => {
+    if (queryErr) {
+      console.error('Error executing SQL script:', queryErr.message);
       return;
     }
-    
+
     console.log('Database setup completed successfully!');
     console.log('Results:', results);
-    
-    // Close the connection
-    connection.end((err) => {
-      if (err) {
-        console.error('Error closing connection:', err);
+
+    connection.end((endErr) => {
+      if (endErr) {
+        console.error('Error closing connection:', endErr.message);
         return;
       }
       console.log('Database connection closed');
