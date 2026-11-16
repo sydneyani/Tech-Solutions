@@ -322,7 +322,7 @@ Role labels on these paths match how the UI calls them. Any caller who can reach
 - Travel History formats amounts as USD. The payment screen formats fares as rupees.
 - `travel_history` inserts use `ON DUPLICATE KEY UPDATE`, and the table has no unique key on `(passenger_id, booking_id)`, so repeat visits can insert another history row.
 - Deleting a train removes schedules and seats. Bookings that still reference those schedules remain.
-- `frontend/src/App.test.js` renders the app and looks for the home heading. That is the only automated test. `npm test` in `frontend` is the Create React App watcher. The API package has start and setup scripts only.
+- `frontend/src/App.test.js` renders the home page and looks for the railway management heading. That is the only automated test. `npm test` in `frontend` is the Create React App watcher. The API package has start and setup scripts only. Jest maps `react-router-dom` 7.5 to its CommonJS build because that release's `main` field points at a file the package does not ship.
 
 ## Roadmap
 
